@@ -40,6 +40,7 @@ Local candidates are stored under `public/assets/sourced/`.
 - Wolt CDN product images: coffee, pastry, dessert shots on marble background.
 - `crema-cover.jpg`: SE MENY cover photo, authentic but dark/provio-heavy, not preferred for hero.
 - `crema-brand-large.jpg`: SE MENY large image, visually clean but appears generic/stock, not preferred for authenticity.
+- `public/assets/generated/crema-logo-transparent.png`: clean AI-generated logo asset inspired by the public Instagram profile mark, used as a polished placeholder until the owner provides official vector artwork.
 
 ## Premium Cafe/Restaurant Design Research
 
@@ -69,3 +70,9 @@ Project response:
 - use product photography and marble surface language,
 - vary section rhythm: cinematic hero, marquee, asymmetric story block, product rail, gallery, map/location, delivery panel,
 - use motion only where it supports premium storefront feel.
+
+## Translation API Note
+
+- Google Cloud Translation documentation says Cloud Translation lets websites and programs dynamically translate text between language pairs.
+- Implementation uses the Basic REST endpoint `https://translation.googleapis.com/language/translate/v2` with `VITE_GOOGLE_TRANSLATE_API_KEY`.
+- Because this is currently a static frontend app, the key must be restricted by HTTP referrer in Google Cloud Console. A later production hardening step can move translation calls behind a serverless proxy.

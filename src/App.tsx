@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   ArrowUpRight,
   AtSign,
@@ -14,48 +14,31 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import clsx from 'clsx'
+import { greekContent, supportedLanguages, type LanguageCode, type SiteContent } from './content'
+import { translateContent } from './lib/googleTranslate'
 
 const asset = (name: string) => `/assets/sourced/${name}`
 
 const heroShots = [
   {
     src: asset('crema-dessert-18.jpg'),
-    alt: 'Freddo drink photographed on marble',
     className: 'hero-shot hero-shot-one',
   },
   {
     src: asset('crema-crepe-05.jpg'),
-    alt: 'Golden pastry photographed on marble',
     className: 'hero-shot hero-shot-two',
   },
   {
     src: asset('crema-waffle-13.jpg'),
-    alt: 'Espresso cup photographed on marble',
     className: 'hero-shot hero-shot-three',
   },
 ]
 
-const signatures = [
-  {
-    title: 'Espresso ritual',
-    detail: 'illy shot, marble counter, clean finish',
-    src: asset('crema-waffle-13.jpg'),
-  },
-  {
-    title: 'Iced crema',
-    detail: 'cold coffee, cinnamon foam, late-night energy',
-    src: asset('crema-dessert-18.jpg'),
-  },
-  {
-    title: 'Pastry hit',
-    detail: 'warm, buttery, fast to your door',
-    src: asset('crema-crepe-05.jpg'),
-  },
-  {
-    title: 'Dessert first',
-    detail: 'crepes, waffles, pastry shop mood',
-    src: asset('crema-dessert-22.jpg'),
-  },
+const signatureImages = [
+  asset('crema-waffle-13.jpg'),
+  asset('crema-dessert-18.jpg'),
+  asset('crema-crepe-05.jpg'),
+  asset('crema-dessert-22.jpg'),
 ]
 
 const gallery = [
@@ -69,7 +52,7 @@ const gallery = [
   asset('crema-dessert-27.jpg'),
 ]
 
-const navItems = ['Story', 'Signatures', 'Gazi', 'Delivery']
+const navTargets = ['story', 'signatures', 'gazi', 'delivery']
 
 function MagneticLink({
   href,
@@ -77,7 +60,7 @@ function MagneticLink({
   variant = 'primary',
 }: {
   href: string
-  children: React.ReactNode
+  children: ReactNode
   variant?: 'primary' | 'secondary'
 }) {
   const ref = useRef<HTMLAnchorElement>(null)
@@ -104,6 +87,46 @@ function MagneticLink({
 
 function App() {
   const rootRef = useRef<HTMLDivElement>(null)
+  const [language, setLanguage] = useState<LanguageCode>('el')
+  const [content, setContent] = useState<SiteContent>(greekContent)
+  const [translationState, setTranslationState] = useState<'idle' | 'loading' | 'ready' | 'missing-key' | 'error'>('idle')
+
+  useEffect(() => {
+    let ignore = false
+
+    async function updateLanguage() {
+      if (language === 'el') {
+        setContent(greekContent)
+        setTranslationState('idle')
+        return
+      }
+
+      setTranslationState('loading')
+
+      try {
+        const translated = await translateContent<SiteContent>(greekContent, language)
+        if (!ignore) {
+          setContent(translated)
+          setTranslationState('ready')
+        }
+      } catch (error) {
+        if (!ignore) {
+          setContent(greekContent)
+          setTranslationState(
+            error instanceof Error && error.message.includes('VITE_GOOGLE_TRANSLATE_API_KEY')
+              ? 'missing-key'
+              : 'error',
+          )
+        }
+      }
+    }
+
+    void updateLanguage()
+
+    return () => {
+      ignore = true
+    }
+  }, [language])
 
   useEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -225,19 +248,34 @@ function App() {
 
       <header className="topbar">
         <a className="brand-lockup" href="#top" aria-label="Crema Gazi home">
-          <img src={asset('crema-instagram-profile.jpg')} alt="" />
-          <span>Crema</span>
+          <img className="brand-logo" src="/assets/generated/crema-logo-trimmed.png" alt="" />
         </a>
         <nav className="desktop-nav" aria-label="Primary navigation">
-          {navItems.map((item) => (
-            <a key={item} href={`#${item.toLowerCase()}`}>
+          {content.nav.map((item, index) => (
+            <a key={navTargets[index]} href={`#${navTargets[index]}`}>
               {item}
             </a>
           ))}
         </nav>
-        <a className="icon-action" href="tel:+302103467213" aria-label="Call Crema Gazi">
-          <Phone size={18} />
-        </a>
+        <div className="topbar-actions">
+          <label className="language-picker">
+            <span>{content.language.label}</span>
+            <select
+              value={language}
+              onChange={(event) => setLanguage(event.target.value as LanguageCode)}
+              aria-label={content.language.label}
+            >
+              {supportedLanguages.map((item) => (
+                <option value={item.code} key={item.code}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <a className="icon-action" href="tel:+302103467213" aria-label={content.meta.call}>
+            <Phone size={18} />
+          </a>
+        </div>
       </header>
 
       <main id="top">
@@ -246,34 +284,44 @@ function App() {
           <div className="hero-copy">
             <p className="eyebrow">
               <Clock3 size={16} />
-              24hr delivery · Gazi Athens
+              {content.hero.eyebrow}
             </p>
             <h1 id="hero-title">
               <span className="line-mask">
-                <span className="reveal-line script-word">Crema</span>
+                <span className="reveal-line script-word">{content.hero.brand}</span>
               </span>
               <span className="line-mask">
-                <span className="reveal-line">Eat dessert</span>
+                <span className="reveal-line">{content.hero.lineOne}</span>
               </span>
               <span className="line-mask">
-                <span className="reveal-line accent-line">first.</span>
+                <span className="reveal-line">{content.hero.lineTwo}</span>
+              </span>
+              <span className="line-mask">
+                <span className="reveal-line accent-line">{content.hero.lineThree}</span>
               </span>
             </h1>
             <p className="hero-subcopy">
-              Crepes, waffles, coffee and pastry shop on Persefonis 63, built for
-              the hour when Gazi still wants something warm, sweet and fast.
+              {content.hero.subcopy}
             </p>
             <div className="hero-actions">
               <MagneticLink href="https://wolt.com/en/grc/athens/restaurant/crema">
                 <ShoppingBag size={18} />
-                Order on Wolt
+                {content.hero.orderWolt}
                 <ArrowUpRight size={16} />
               </MagneticLink>
               <MagneticLink href="https://www.e-food.gr/delivery/menu/crema" variant="secondary">
-                efood
+                {content.hero.orderEfood}
                 <ArrowUpRight size={16} />
               </MagneticLink>
             </div>
+            {translationState !== 'idle' && (
+              <p className="translation-status" role="status">
+                {translationState === 'loading' && content.language.loading}
+                {translationState === 'ready' && content.language.ready}
+                {translationState === 'missing-key' && content.language.apiMissing}
+                {translationState === 'error' && content.language.fallback}
+              </p>
+            )}
           </div>
 
           <div className="hero-stage" aria-hidden="true">
@@ -283,20 +331,20 @@ function App() {
                 key={shot.src}
                 className={shot.className}
                 src={shot.src}
-                alt={shot.alt}
+                alt={content.heroShots[index]}
                 data-float={index + 0.5}
               />
             ))}
             <div className="delivery-chip" data-float="0.8">
               <Bike size={20} />
-              <span>Persefonis 63</span>
+              <span>{content.hero.location}</span>
             </div>
           </div>
 
           <div className="hero-footer">
-            <span>Life is uncertain.</span>
-            <span>Eat dessert first.</span>
-            <span>210 346 7213</span>
+            <span>{content.hero.footerOne}</span>
+            <span>{content.hero.footerTwo}</span>
+            <span>{content.hero.phone}</span>
           </div>
         </section>
 
@@ -304,15 +352,15 @@ function App() {
           <div className="marquee-track">
             {Array.from({ length: 2 }).map((_, group) => (
               <div className="marquee-group" key={group}>
-                <span>coffee</span>
+                <span>{content.marquee[0]}</span>
                 <Star size={18} />
-                <span>crepes</span>
+                <span>{content.marquee[1]}</span>
                 <Star size={18} />
-                <span>waffles</span>
+                <span>{content.marquee[2]}</span>
                 <Star size={18} />
-                <span>pastry</span>
+                <span>{content.marquee[3]}</span>
                 <Star size={18} />
-                <span>24hr delivery</span>
+                <span>{content.marquee[4]}</span>
                 <Star size={18} />
               </div>
             ))}
@@ -323,20 +371,16 @@ function App() {
           <div className="section-copy story-copy">
             <p className="eyebrow">
               <Coffee size={16} />
-              Crema Gazi
+              {content.story.eyebrow}
             </p>
-            <h2>Not a quiet coffee page. A late-night dessert signal.</h2>
-            <p>
-              The public brand cues are direct: black backdrop, green crema icon,
-              orange delivery energy, white script logo. The website turns that into
-              a sharper, premium storefront for the shop people already order from.
-            </p>
+            <h2>{content.story.title}</h2>
+            <p>{content.story.body}</p>
           </div>
           <div className="story-visual image-reveal">
-            <img src={asset('crema-instagram-profile.jpg')} alt="Crema Gazi logo from Instagram profile" />
+            <img className="story-logo" src="/assets/generated/crema-logo-trimmed.png" alt={content.story.logoAlt} />
             <div>
-              <span>24hr delivery</span>
-              <strong>crepes · waffles · coffee · pastry shop</strong>
+              <span>{content.story.visualMain}</span>
+              <strong>{content.story.visualSub}</strong>
             </div>
           </div>
         </section>
@@ -345,16 +389,16 @@ function App() {
           <div className="section-copy section-heading">
             <p className="eyebrow">
               <Star size={16} />
-              Signatures
+              {content.signatures.eyebrow}
             </p>
-            <h2>Marble, crema, heat, sugar. No generic delivery grid.</h2>
+            <h2>{content.signatures.title}</h2>
           </div>
 
           <div className="signature-grid">
-            {signatures.map((item, index) => (
+            {content.signatures.items.map((item, index) => (
               <article className="signature-card image-reveal" key={item.title}>
                 <span>{String(index + 1).padStart(2, '0')}</span>
-                <img src={item.src} alt="" />
+                <img src={signatureImages[index]} alt="" />
                 <div>
                   <h3>{item.title}</h3>
                   <p>{item.detail}</p>
@@ -367,14 +411,14 @@ function App() {
         <section className="gallery-section" aria-label="Crema product gallery">
           {gallery.map((src, index) => (
             <figure className="gallery-tile image-reveal" key={src}>
-              <img src={src} alt={`Crema product detail ${index + 1}`} loading="lazy" />
+              <img src={src} alt={`${content.galleryAlt} ${index + 1}`} loading="lazy" />
             </figure>
           ))}
         </section>
 
         <section className="location-section" id="gazi">
           <div className="location-map image-reveal" aria-hidden="true">
-            <span>Gazi</span>
+            <span>{content.location.mapWord}</span>
             <div className="map-line map-line-one" />
             <div className="map-line map-line-two" />
             <div className="map-pin">
@@ -384,22 +428,19 @@ function App() {
           <div className="section-copy location-copy">
             <p className="eyebrow">
               <MapPin size={16} />
-              Persefonis 63
+              {content.location.eyebrow}
             </p>
-            <h2>Made for the Gazi rhythm: coffee before, dessert after, delivery always.</h2>
-            <p>
-              Public listings place Crema at Persefonis 63, Gazi, Athens, with
-              24-hour delivery and phone orders at 210 346 7213.
-            </p>
+            <h2>{content.location.title}</h2>
+            <p>{content.location.body}</p>
             <div className="location-actions">
               <MagneticLink href="https://www.google.com/maps/search/?api=1&query=Crema%20Gazi%20Persefonis%2063%20Athens">
                 <MapPin size={18} />
-                Open map
+                {content.location.openMap}
                 <ArrowUpRight size={16} />
               </MagneticLink>
               <MagneticLink href="tel:+302103467213" variant="secondary">
                 <Phone size={18} />
-                Call now
+                {content.location.callNow}
               </MagneticLink>
             </div>
           </div>
@@ -409,24 +450,24 @@ function App() {
           <div className="delivery-copy section-copy">
             <p className="eyebrow">
               <Bike size={16} />
-              Open all day
+              {content.delivery.eyebrow}
             </p>
-            <h2>When the city is still awake, Crema is still moving.</h2>
+            <h2>{content.delivery.title}</h2>
           </div>
           <div className="delivery-panel image-reveal">
             <div>
-              <span>24</span>
-              <small>hours</small>
+              <span>{content.delivery.hours}</span>
+              <small>{content.delivery.hoursLabel}</small>
             </div>
-            <p>Order via Wolt or efood, or call the shop directly.</p>
+            <p>{content.delivery.body}</p>
             <div className="delivery-actions">
-              <a href="https://www.instagram.com/crema_gazi/" target="_blank" rel="noreferrer" aria-label="Crema Gazi Instagram">
+              <a href="https://www.instagram.com/crema_gazi/" target="_blank" rel="noreferrer" aria-label={content.meta.instagram}>
                 <AtSign size={18} />
               </a>
-              <a href="tel:+302103467213" aria-label="Call Crema Gazi">
+              <a href="tel:+302103467213" aria-label={content.meta.call}>
                 <Phone size={18} />
               </a>
-              <a href="https://wolt.com/en/grc/athens/restaurant/crema" target="_blank" rel="noreferrer" aria-label="Order Crema on Wolt">
+              <a href="https://wolt.com/en/grc/athens/restaurant/crema" target="_blank" rel="noreferrer" aria-label={content.meta.orderWolt}>
                 <ShoppingBag size={18} />
               </a>
             </div>
@@ -436,7 +477,7 @@ function App() {
 
       <footer className="site-footer">
         <span className="script-word">Crema</span>
-        <p>Persefonis 63, Gazi · 210 346 7213 · 24hr delivery</p>
+        <p>{content.footer.address}</p>
       </footer>
     </div>
   )
