@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 test('homepage renders the Crema experience without layout overflow', async ({ page }) => {
   await page.goto('/')
 
-  await expect(page.getByRole('heading', { name: /Crema Φάε γλυκό πρώτα/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Crema Γλυκό πρώτα/i })).toBeVisible()
   await expect(page.locator('.hero-actions').getByRole('link', { name: /Παραγγελία στο Wolt/i })).toBeVisible()
   await expect(page.locator('.delivery-chip')).toContainText('Περσεφόνης 63')
 

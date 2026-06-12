@@ -290,15 +290,13 @@ function App() {
               <span className="line-mask">
                 <span className="reveal-line script-word">{content.hero.brand}</span>
               </span>
-              <span className="line-mask">
-                <span className="reveal-line">{content.hero.lineOne}</span>
-              </span>
-              <span className="line-mask">
-                <span className="reveal-line">{content.hero.lineTwo}</span>
-              </span>
-              <span className="line-mask">
-                <span className="reveal-line accent-line">{content.hero.lineThree}</span>
-              </span>
+              {content.hero.headline.map((line, index) => (
+                <span className="line-mask" key={line}>
+                  <span className={clsx('reveal-line', index === content.hero.headline.length - 1 && 'accent-line')}>
+                    {line}
+                  </span>
+                </span>
+              ))}
             </h1>
             <p className="hero-subcopy">
               {content.hero.subcopy}

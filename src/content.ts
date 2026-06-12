@@ -26,11 +26,9 @@ export const greekContent = {
   hero: {
     eyebrow: '24ωρο delivery · Γκάζι Αθήνα',
     brand: 'Crema',
-    lineOne: 'Φάε',
-    lineTwo: 'γλυκό',
-    lineThree: 'πρώτα.',
+    headline: ['Γλυκό', 'πρώτα.'],
     subcopy:
-      'Κρέπες, βάφλες, καφές και pastry shop στην Περσεφόνης 63, για την ώρα που το Γκάζι θέλει κάτι ζεστό, γλυκό και γρήγορο.',
+      'Κρέπες, βάφλες, καφές και γλυκά στην Περσεφόνης 63, για την ώρα που το Γκάζι θέλει κάτι ζεστό, γλυκό και γρήγορο.',
     orderWolt: 'Παραγγελία στο Wolt',
     orderEfood: 'efood',
     footerOne: 'Life is uncertain.',
@@ -46,11 +44,11 @@ export const greekContent = {
   marquee: ['καφές', 'κρέπες', 'βάφλες', 'pastry', '24ωρο delivery'],
   story: {
     eyebrow: 'Crema Gazi',
-    title: 'Όχι μια ήσυχη σελίδα καφέ. Ένα late-night dessert signal.',
+    title: 'Όχι μια ήσυχη σελίδα καφέ. Ένα σήμα για γλυκό αργά τη νύχτα.',
     body:
-      'Τα δημόσια brand cues είναι ξεκάθαρα: μαύρο φόντο, πράσινο σύμβολο crema, πορτοκαλί delivery ενέργεια, λευκό χειρόγραφο logo. Το site τα μετατρέπει σε πιο sharp, premium storefront για το μαγαζί από το οποίο ήδη παραγγέλνει ο κόσμος.',
+      'Η δημόσια εικόνα του μαγαζιού είναι ξεκάθαρη: μαύρο φόντο, πράσινο σύμβολο crema, πορτοκαλί ένταση delivery και λευκό χειρόγραφο logo. Το site τα μετατρέπει σε καθαρή, premium βιτρίνα για το μαγαζί από το οποίο ήδη παραγγέλνει ο κόσμος.',
     visualMain: '24ωρο delivery',
-    visualSub: 'κρέπες · βάφλες · καφές · pastry shop',
+    visualSub: 'κρέπες · βάφλες · καφές · γλυκά',
     logoAlt: 'Logo Crema Gazi από το δημόσιο Instagram profile',
   },
   signatures: {
@@ -63,7 +61,7 @@ export const greekContent = {
       },
       {
         title: 'Iced crema',
-        detail: 'κρύος καφές, αφρός, κανέλα, late-night ενέργεια',
+        detail: 'κρύος καφές, αφρός, κανέλα, ενέργεια μέχρι αργά',
       },
       {
         title: 'Pastry hit',
