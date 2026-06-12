@@ -73,6 +73,37 @@ export const greekContent = {
       },
     ],
   },
+  products: {
+    eyebrow: 'Δημοφιλή',
+    title: 'Πράγματα που παραγγέλνεις χωρίς δεύτερη σκέψη.',
+    cta: 'Παράγγειλε',
+    items: [
+      {
+        name: 'Freddo με αφρό',
+        note: 'κρύο, καθαρό, έτοιμο για βόλτα στο Γκάζι',
+      },
+      {
+        name: 'Ζεστή σφολιάτα',
+        note: 'βουτυράτη υφή, γρήγορο comfort',
+      },
+      {
+        name: 'Espresso shot',
+        note: 'μικρό, δυνατό, ακριβές',
+      },
+      {
+        name: 'Γλυκό late night',
+        note: 'όταν το “κάτι γλυκό” γίνεται παραγγελία',
+      },
+      {
+        name: 'Crema coffee',
+        note: 'καφές με μαρμάρινο mood',
+      },
+      {
+        name: 'Snack stop',
+        note: 'για πριν, μετά ή ανάμεσα',
+      },
+    ],
+  },
   galleryAlt: 'Λεπτομέρεια προϊόντος Crema',
   location: {
     eyebrow: 'Περσεφόνης 63',

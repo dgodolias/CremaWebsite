@@ -52,6 +52,15 @@ const gallery = [
   asset('crema-dessert-27.jpg'),
 ]
 
+const productImages = [
+  asset('crema-dessert-18.jpg'),
+  asset('crema-crepe-05.jpg'),
+  asset('crema-waffle-13.jpg'),
+  asset('crema-dessert-23.jpg'),
+  asset('crema-dessert-24.jpg'),
+  asset('crema-dessert-27.jpg'),
+]
+
 const navTargets = ['story', 'signatures', 'gazi', 'delivery']
 
 function MagneticLink({
@@ -400,6 +409,33 @@ function App() {
                 <div>
                   <h3>{item.title}</h3>
                   <p>{item.detail}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="products-section" aria-labelledby="products-title">
+          <div className="section-copy section-heading">
+            <p className="eyebrow">
+              <ShoppingBag size={16} />
+              {content.products.eyebrow}
+            </p>
+            <h2 id="products-title">{content.products.title}</h2>
+          </div>
+
+          <div className="products-rail">
+            {content.products.items.map((item, index) => (
+              <article className="product-card image-reveal" key={item.name}>
+                <img src={productImages[index]} alt="" loading="lazy" />
+                <div className="product-card-copy">
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                  <h3>{item.name}</h3>
+                  <p>{item.note}</p>
+                  <a href="https://wolt.com/en/grc/athens/restaurant/crema" target="_blank" rel="noreferrer">
+                    {content.products.cta}
+                    <ArrowUpRight size={15} />
+                  </a>
                 </div>
               </article>
             ))}
