@@ -50,6 +50,20 @@ Patterns worth borrowing:
 - Awwwards CoffeeTech: dark minimal palette, hero object focus, 3D/scroll transitions, warm orange with deep charcoal.
 - Awwwards Grab&Go: bold orange single-signal branding, day/night delivery storytelling, map/location section, mouse interactions.
 - Awwwards Sonoma Bakery: black/white/brown palette, photo-led storytelling, GSAP/React/Vercel stack.
+- Awwwards Assembly Specialty Coffee: sleek/minimal premium coffee product focus, sustainability/education content, GSAP stack signals.
+- Awwwards Bernice Bakery: shoppable bakery site with dynamic custom animations; useful reminder that playful motion can still support ordering.
+- Awwwards Little Amps Coffee: conversion-optimized coffee site, warm local brand storytelling, cohesive digital system.
+- Awwwards Escape Coffee: big background images, parallax, vertical menu and about/footer design; useful for coffee storytelling sections.
+- Awwwards Restaurant GEM: warm refined restaurant site with subtle motion and seamless booking flow; relevant for premium hospitality pacing.
+- Awwwards Food & Drink and Hotel/Restaurant galleries: category-level benchmark for visual appetite, photography-led sections and hospitality polish.
+- GSAP Showcase: validates GSAP as the right motion stack for premium interactive choreography.
+- SiteBuilderReport cafe examples: practical commercial patterns: clean navigation, warm color schemes, baked-goods/coffee storytelling and catering/order prompts.
+
+Next research targets:
+
+- Find more late-night dessert/crepe/waffle shops, not only specialty coffee, so Crema does not drift too far into roastery aesthetics.
+- Compare delivery-first restaurant landing pages for CTA density, sticky order patterns and mobile-first conversion.
+- Record specific motion patterns as implementation tickets: scroll-pinned product stage, hover flavor cards, route/map reveal, language-switch transition.
 
 ## Anti "Vibe-Coded Look" Notes
 
