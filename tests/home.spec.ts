@@ -42,3 +42,21 @@ test('language selector opens a custom menu without native browser chrome', asyn
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
   expect(overflow).toBeLessThanOrEqual(2)
 })
+
+test('hero video scrubs when the desktop page scrolls', async ({ browserName, page }) => {
+  test.skip(browserName !== 'chromium', 'desktop Chromium gives the most stable media seek signal')
+
+  await page.goto('/')
+  await page.waitForFunction(() => {
+    const video = document.querySelector<HTMLVideoElement>('.hero-scroll-video')
+    return video && video.readyState >= 2 && Number.isFinite(video.duration) && video.duration > 0
+  })
+
+  await page.mouse.wheel(0, 900)
+
+  await expect
+    .poll(() => page.locator('.hero-scroll-video').evaluate((element) => (element as HTMLVideoElement).currentTime), {
+      timeout: 8_000,
+    })
+    .toBeGreaterThan(0.25)
+})

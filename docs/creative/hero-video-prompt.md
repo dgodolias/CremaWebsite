@@ -23,3 +23,16 @@ Do not add hands, people, forks, knives, logos, text, steam clouds, extra plates
 ## Short Version
 
 Exact first-frame image-to-video. Premium overhead dessert cafe table, very slow top-down camera drift, tiny realistic chocolate/coffee/light movement, no cuts, no new objects, no hands, no text, no food morphing, scrub-safe forward and reverse, final frame close to first frame.
+
+## Implementation Notes
+
+- Scroll scrubbing seeks the video with `HTMLMediaElement.currentTime`, so the delivery file must be encoded for frequent seeking.
+- Use an all-intra/keyframe-friendly MP4 for the scroll version, not only a normal streaming MP4.
+- Current FFmpeg command used for `public/assets/generated/crema-hero-scroll.mp4`:
+
+```bash
+ffmpeg -y -i public/assets/generated/crema-hero-scroll.mp4 -an -c:v libx264 -preset veryfast -crf 23 -g 1 -keyint_min 1 -sc_threshold 0 -pix_fmt yuv420p -movflags +faststart public/assets/generated/crema-hero-scroll-scrub.mp4
+```
+
+- Keep a poster image visible until the browser has decoded actual video data. Do not fade in the video on `loadedmetadata`; wait for `loadeddata`.
+- The React source appends a cache-busting query to the MP4 URL after each scrub export update.

@@ -127,9 +127,9 @@ export const greekContent = {
   language: {
     label: 'Γλώσσα',
     loading: 'Μετάφραση...',
-    apiMissing: 'Πρόσθεσε Google Translate API key για live μετάφραση.',
-    ready: 'Μετάφραση από Google Cloud Translation.',
-    fallback: 'Ελληνικό περιεχόμενο μέχρι να συνδεθεί API key.',
+    apiMissing: 'Η μετάφραση δεν είναι διαθέσιμη αυτή τη στιγμή.',
+    ready: 'Μετάφραση από Google Translate.',
+    fallback: 'Η μετάφραση δεν είναι διαθέσιμη αυτή τη στιγμή.',
   },
 } as const
 

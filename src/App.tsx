@@ -21,7 +21,8 @@ import { greekContent, supportedLanguages, type LanguageCode } from './content'
 
 const asset = (name: string) => `/assets/sourced/${name}`
 const heroPoster = asset('crema-scroll-cover.avif')
-const heroScrollVideo = import.meta.env.VITE_HERO_SCROLL_VIDEO ?? '/assets/generated/crema-hero-scroll.mp4'
+const heroScrollVideoSource = import.meta.env.VITE_HERO_SCROLL_VIDEO ?? '/assets/generated/crema-hero-scroll.mp4'
+const heroScrollVideo = `${heroScrollVideoSource}${heroScrollVideoSource.includes('?') ? '&' : '?'}v=20260613-scrub`
 
 const signatureImages = [
   asset('crema-waffle-13.jpg'),
@@ -283,7 +284,11 @@ function GoogleTranslateBridge({
       script.id = GOOGLE_TRANSLATE_SCRIPT_ID
       script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'
       script.async = true
-      script.onerror = () => onStateChange('error')
+      script.onerror = () => {
+        if (language !== 'el') {
+          onStateChange('error')
+        }
+      }
       document.head.appendChild(script)
     }
   }, [language, onStateChange])
@@ -305,11 +310,12 @@ function HeroScrollMedia() {
         className={clsx('hero-scroll-video', videoReady && 'is-ready')}
         muted
         playsInline
-        preload="metadata"
+        preload="auto"
         poster={heroPoster}
-        onLoadedMetadata={(event) => {
-          event.currentTarget.pause()
-          setVideoReady(true)
+        onLoadedData={(event) => {
+          const video = event.currentTarget
+          video.pause()
+          requestAnimationFrame(() => setVideoReady(true))
         }}
         onError={() => setVideoReady(false)}
       >
@@ -363,6 +369,7 @@ function App() {
     rafId = requestAnimationFrame(raf)
 
     let cleanupHeroVideo: (() => void) | undefined
+    let heroVideoSeekRaf = 0
 
     const context = gsap.context(() => {
       gsap.set('.reveal-line', { yPercent: 112, rotate: 2 })
@@ -418,11 +425,21 @@ function App() {
       })
 
       const heroVideo = document.querySelector<HTMLVideoElement>('.hero-scroll-video')
+      let pendingHeroVideoTime = 0
+
+      const commitHeroVideoSeek = () => {
+        heroVideoSeekRaf = 0
+        if (!heroVideo || !Number.isFinite(heroVideo.duration) || heroVideo.duration <= 0) return
+        if (Math.abs(heroVideo.currentTime - pendingHeroVideoTime) > 1 / 48) {
+          heroVideo.currentTime = pendingHeroVideoTime
+        }
+      }
+
       const syncHeroVideo = (progress: number) => {
         if (!heroVideo || !Number.isFinite(heroVideo.duration) || heroVideo.duration <= 0) return
-        const targetTime = Math.min(heroVideo.duration - 0.04, Math.max(0, heroVideo.duration * progress))
-        if (Math.abs(heroVideo.currentTime - targetTime) > 0.025) {
-          heroVideo.currentTime = targetTime
+        pendingHeroVideoTime = Math.min(heroVideo.duration - 1 / 24, Math.max(0, heroVideo.duration * progress))
+        if (!heroVideoSeekRaf) {
+          heroVideoSeekRaf = requestAnimationFrame(commitHeroVideoSeek)
         }
       }
 
@@ -434,9 +451,16 @@ function App() {
         onUpdate: (self) => syncHeroVideo(self.progress),
       })
 
-      const onHeroVideoMetadata = () => syncHeroVideo(heroScrub.progress)
-      heroVideo?.addEventListener('loadedmetadata', onHeroVideoMetadata)
-      cleanupHeroVideo = () => heroVideo?.removeEventListener('loadedmetadata', onHeroVideoMetadata)
+      const onHeroVideoReady = () => {
+        syncHeroVideo(heroScrub.progress)
+        ScrollTrigger.refresh()
+      }
+      heroVideo?.addEventListener('loadedmetadata', onHeroVideoReady)
+      heroVideo?.addEventListener('loadeddata', onHeroVideoReady)
+      cleanupHeroVideo = () => {
+        heroVideo?.removeEventListener('loadedmetadata', onHeroVideoReady)
+        heroVideo?.removeEventListener('loadeddata', onHeroVideoReady)
+      }
 
       gsap.to('.hero-media', {
         scale: 1.12,
@@ -518,6 +542,7 @@ function App() {
     return () => {
       window.removeEventListener('pointermove', onPointerMove)
       cancelAnimationFrame(rafId)
+      cancelAnimationFrame(heroVideoSeekRaf)
       cleanupHeroVideo?.()
       lenis.destroy()
       context.revert()
@@ -588,7 +613,7 @@ function App() {
                 <ArrowUpRight size={16} />
               </MagneticLink>
             </div>
-            {translationState !== 'idle' && (
+            {language !== 'el' && translationState !== 'idle' && (
               <p className="translation-status" role="status">
                 {translationState === 'loading' && content.language.loading}
                 {translationState === 'ready' && content.language.ready}
