@@ -17,25 +17,11 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import clsx from 'clsx'
-import { greekContent, supportedLanguages, type LanguageCode, type SiteContent } from './content'
-import { translateContent } from './lib/googleTranslate'
+import { greekContent, supportedLanguages, type LanguageCode } from './content'
 
 const asset = (name: string) => `/assets/sourced/${name}`
-
-const heroShots = [
-  {
-    src: asset('crema-dessert-18.jpg'),
-    className: 'hero-shot hero-shot-one',
-  },
-  {
-    src: asset('crema-crepe-05.jpg'),
-    className: 'hero-shot hero-shot-two',
-  },
-  {
-    src: asset('crema-waffle-13.jpg'),
-    className: 'hero-shot hero-shot-three',
-  },
-]
+const heroPoster = asset('crema-scroll-cover.avif')
+const heroScrollVideo = import.meta.env.VITE_HERO_SCROLL_VIDEO ?? '/assets/generated/crema-hero-scroll.mp4'
 
 const signatureImages = [
   asset('crema-waffle-13.jpg'),
@@ -65,7 +51,46 @@ const productImages = [
 ]
 
 const navTargets = ['story', 'signatures', 'gazi', 'delivery']
-type TranslationState = 'idle' | 'loading' | 'ready' | 'missing-key' | 'error'
+type TranslationState = 'idle' | 'loading' | 'ready' | 'error'
+type GoogleTranslateOptions = {
+  pageLanguage: string
+  includedLanguages: string
+  autoDisplay: boolean
+  layout?: string | number
+}
+type GoogleTranslateElement = {
+  new (options: GoogleTranslateOptions, elementId: string): void
+  InlineLayout?: {
+    SIMPLE?: string | number
+  }
+}
+
+declare global {
+  interface Window {
+    googleTranslateElementInit?: () => void
+    google?: {
+      translate?: {
+        TranslateElement?: GoogleTranslateElement
+      }
+    }
+  }
+}
+
+const GOOGLE_TRANSLATE_SCRIPT_ID = 'google-translate-widget-script'
+const LANGUAGE_STORAGE_KEY = 'crema-gazi-language'
+const googleTranslateLanguages = supportedLanguages
+  .filter((item) => item.code !== 'el')
+  .map((item) => item.code)
+  .join(',')
+
+function isLanguageCode(value: string | null): value is LanguageCode {
+  return supportedLanguages.some((item) => item.code === value)
+}
+
+function getInitialLanguage(): LanguageCode {
+  const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
+  return isLanguageCode(stored) ? stored : 'el'
+}
 
 function MagneticLink({
   href,
@@ -113,11 +138,10 @@ function LanguageMenu({
   const menuRef = useRef<HTMLDivElement>(null)
   const currentLanguage = supportedLanguages.find((item) => item.code === language) ?? supportedLanguages[0]
   const statusLabel: Record<TranslationState, string> = {
-    idle: 'Έτοιμο',
-    loading: 'Μετάφραση σε εξέλιξη',
-    ready: 'Μετάφραση ενεργή',
-    'missing-key': 'Λείπει Google Translate API key',
-    error: 'Προβολή στα Ελληνικά',
+    idle: 'Ελληνικό πρωτότυπο',
+    loading: 'Google Translate φορτώνει',
+    ready: 'Google Translate ενεργό',
+    error: 'Μετάφραση μη διαθέσιμη',
   }
 
   useEffect(() => {
@@ -146,7 +170,7 @@ function LanguageMenu({
   }, [isOpen])
 
   return (
-    <div className="language-picker" ref={menuRef}>
+    <div className="language-picker notranslate" translate="no" ref={menuRef}>
       <button
         className="language-trigger"
         type="button"
@@ -200,48 +224,123 @@ function LanguageMenu({
   )
 }
 
-function App() {
-  const rootRef = useRef<HTMLDivElement>(null)
-  const [language, setLanguage] = useState<LanguageCode>('el')
-  const [content, setContent] = useState<SiteContent>(greekContent)
-  const [translationState, setTranslationState] = useState<TranslationState>('idle')
+function clearGoogleTranslateCookie() {
+  const expires = 'expires=Thu, 01 Jan 1970 00:00:00 GMT'
+  document.cookie = `googtrans=; ${expires}; path=/`
+  document.cookie = `googtrans=; ${expires}; path=/; domain=${window.location.hostname}`
+}
 
+function setGoogleTranslateCookie(language: Exclude<LanguageCode, 'el'>) {
+  const value = `/el/${language}`
+  const maxAge = 'max-age=31536000'
+  document.cookie = `googtrans=${value}; ${maxAge}; path=/`
+  document.cookie = `googtrans=${value}; ${maxAge}; path=/; domain=${window.location.hostname}`
+}
+
+function GoogleTranslateBridge({
+  language,
+  onStateChange,
+}: {
+  language: LanguageCode
+  onStateChange: (state: TranslationState) => void
+}) {
   useEffect(() => {
-    let ignore = false
-
-    async function updateLanguage() {
-      if (language === 'el') {
-        setContent(greekContent)
-        setTranslationState('idle')
+    const initWidget = () => {
+      const host = document.getElementById('google_translate_element')
+      const TranslateElement = window.google?.translate?.TranslateElement
+      if (!host || !TranslateElement) return
+      if (host.dataset.ready === 'true') {
+        onStateChange(language === 'el' ? 'idle' : 'ready')
         return
       }
 
-      setTranslationState('loading')
-
       try {
-        const translated = await translateContent<SiteContent>(greekContent, language)
-        if (!ignore) {
-          setContent(translated)
-          setTranslationState('ready')
-        }
-      } catch (error) {
-        if (!ignore) {
-          setContent(greekContent)
-          setTranslationState(
-            error instanceof Error && error.message.includes('VITE_GOOGLE_TRANSLATE_API_KEY')
-              ? 'missing-key'
-              : 'error',
-          )
-        }
+        new TranslateElement(
+          {
+            pageLanguage: 'el',
+            includedLanguages: googleTranslateLanguages,
+            autoDisplay: false,
+            layout: TranslateElement.InlineLayout?.SIMPLE,
+          },
+          'google_translate_element',
+        )
+        host.dataset.ready = 'true'
+        onStateChange(language === 'el' ? 'idle' : 'ready')
+      } catch {
+        onStateChange('error')
       }
     }
 
-    void updateLanguage()
+    window.googleTranslateElementInit = initWidget
 
-    return () => {
-      ignore = true
+    if (window.google?.translate?.TranslateElement) {
+      initWidget()
+      return
     }
-  }, [language])
+
+    if (!document.getElementById(GOOGLE_TRANSLATE_SCRIPT_ID)) {
+      const script = document.createElement('script')
+      script.id = GOOGLE_TRANSLATE_SCRIPT_ID
+      script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'
+      script.async = true
+      script.onerror = () => onStateChange('error')
+      document.head.appendChild(script)
+    }
+  }, [language, onStateChange])
+
+  return (
+    <div className="google-translate-bridge" aria-hidden="true">
+      <div id="google_translate_element" />
+    </div>
+  )
+}
+
+function HeroScrollMedia() {
+  const [videoReady, setVideoReady] = useState(false)
+
+  return (
+    <div className="hero-media" aria-hidden="true">
+      <img className="hero-poster" src={heroPoster} alt="" />
+      <video
+        className={clsx('hero-scroll-video', videoReady && 'is-ready')}
+        muted
+        playsInline
+        preload="metadata"
+        poster={heroPoster}
+        onLoadedMetadata={(event) => {
+          event.currentTarget.pause()
+          setVideoReady(true)
+        }}
+        onError={() => setVideoReady(false)}
+      >
+        {heroScrollVideo && <source src={heroScrollVideo} type="video/mp4" />}
+      </video>
+      <div className="hero-media-shade" />
+    </div>
+  )
+}
+
+function App() {
+  const rootRef = useRef<HTMLDivElement>(null)
+  const [language, setLanguage] = useState<LanguageCode>(getInitialLanguage)
+  const [translationState, setTranslationState] = useState<TranslationState>('idle')
+  const content = greekContent
+
+  const handleLanguageChange = (nextLanguage: LanguageCode) => {
+    if (nextLanguage === language) return
+
+    setLanguage(nextLanguage)
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage)
+    setTranslationState(nextLanguage === 'el' ? 'idle' : 'loading')
+
+    if (nextLanguage === 'el') {
+      clearGoogleTranslateCookie()
+    } else {
+      setGoogleTranslateCookie(nextLanguage)
+    }
+
+    window.setTimeout(() => window.location.reload(), 80)
+  }
 
   useEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -254,6 +353,7 @@ function App() {
       wheelMultiplier: 0.8,
       touchMultiplier: 1.1,
     })
+    lenis.on('scroll', ScrollTrigger.update)
 
     let rafId = 0
     const raf = (time: number) => {
@@ -262,8 +362,11 @@ function App() {
     }
     rafId = requestAnimationFrame(raf)
 
+    let cleanupHeroVideo: (() => void) | undefined
+
     const context = gsap.context(() => {
       gsap.set('.reveal-line', { yPercent: 112, rotate: 2 })
+      gsap.set('.story-section', { opacity: 0, y: 64 })
       gsap.to('.reveal-line', {
         yPercent: 0,
         rotate: 0,
@@ -272,15 +375,20 @@ function App() {
         ease: 'power4.out',
       })
 
-      gsap.from('.hero-shot', {
-        y: 80,
-        opacity: 0,
-        scale: 0.92,
-        rotate: -3,
-        duration: 1.15,
-        stagger: 0.12,
+      gsap.from('.hero-media', {
+        opacity: 0.72,
+        scale: 1.08,
+        duration: 1.5,
         ease: 'power3.out',
-        delay: 0.2,
+      })
+
+      gsap.from('.hero-delivery-chip', {
+        y: 34,
+        opacity: 0,
+        scale: 0.9,
+        duration: 1,
+        ease: 'power3.out',
+        delay: 0.35,
       })
 
       gsap.to('.scroll-progress', {
@@ -307,6 +415,63 @@ function App() {
             scrub: true,
           },
         })
+      })
+
+      const heroVideo = document.querySelector<HTMLVideoElement>('.hero-scroll-video')
+      const syncHeroVideo = (progress: number) => {
+        if (!heroVideo || !Number.isFinite(heroVideo.duration) || heroVideo.duration <= 0) return
+        const targetTime = Math.min(heroVideo.duration - 0.04, Math.max(0, heroVideo.duration * progress))
+        if (Math.abs(heroVideo.currentTime - targetTime) > 0.025) {
+          heroVideo.currentTime = targetTime
+        }
+      }
+
+      const heroScrub = ScrollTrigger.create({
+        trigger: '.hero',
+        start: 'top top',
+        end: 'bottom top',
+        scrub: true,
+        onUpdate: (self) => syncHeroVideo(self.progress),
+      })
+
+      const onHeroVideoMetadata = () => syncHeroVideo(heroScrub.progress)
+      heroVideo?.addEventListener('loadedmetadata', onHeroVideoMetadata)
+      cleanupHeroVideo = () => heroVideo?.removeEventListener('loadedmetadata', onHeroVideoMetadata)
+
+      gsap.to('.hero-media', {
+        scale: 1.12,
+        filter: 'saturate(1.18) brightness(0.92)',
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.hero',
+          start: 'top top',
+          end: 'bottom top',
+          scrub: true,
+        },
+      })
+
+      gsap.to('.hero-copy', {
+        y: -36,
+        opacity: 0.36,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.hero',
+          start: 'top top',
+          end: 'bottom top',
+          scrub: true,
+        },
+      })
+
+      gsap.to('.story-section', {
+        opacity: 1,
+        y: 0,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.story-section',
+          start: 'top 92%',
+          end: 'top 68%',
+          scrub: true,
+        },
       })
 
       gsap.utils.toArray<HTMLElement>('.image-reveal').forEach((el) => {
@@ -338,6 +503,7 @@ function App() {
           },
         })
       })
+
     }, rootRef)
 
     const onPointerMove = (event: PointerEvent) => {
@@ -352,6 +518,7 @@ function App() {
     return () => {
       window.removeEventListener('pointermove', onPointerMove)
       cancelAnimationFrame(rafId)
+      cleanupHeroVideo?.()
       lenis.destroy()
       context.revert()
     }
@@ -360,6 +527,7 @@ function App() {
   return (
     <div className="site-shell" ref={rootRef}>
       <div className="scroll-progress" />
+      <GoogleTranslateBridge language={language} onStateChange={setTranslationState} />
 
       <header className="topbar">
         <a className="brand-lockup" href="#top" aria-label="Crema Gazi home">
@@ -377,7 +545,7 @@ function App() {
             language={language}
             label={content.language.label}
             state={translationState}
-            onChange={setLanguage}
+            onChange={handleLanguageChange}
           />
           <a className="icon-action" href="tel:+302103467213" aria-label={content.meta.call}>
             <Phone size={18} />
@@ -387,6 +555,7 @@ function App() {
 
       <main id="top">
         <section className="hero" aria-labelledby="hero-title">
+          <HeroScrollMedia />
           <div className="hero-noise" />
           <div className="hero-copy">
             <p className="eyebrow">
@@ -423,27 +592,14 @@ function App() {
               <p className="translation-status" role="status">
                 {translationState === 'loading' && content.language.loading}
                 {translationState === 'ready' && content.language.ready}
-                {translationState === 'missing-key' && content.language.apiMissing}
                 {translationState === 'error' && content.language.fallback}
               </p>
             )}
           </div>
 
-          <div className="hero-stage" aria-hidden="true">
-            <div className="stage-ring" />
-            {heroShots.map((shot, index) => (
-              <img
-                key={shot.src}
-                className={shot.className}
-                src={shot.src}
-                alt={content.heroShots[index]}
-                data-float={index + 0.5}
-              />
-            ))}
-            <div className="delivery-chip" data-float="0.8">
-              <Bike size={20} />
-              <span>{content.hero.location}</span>
-            </div>
+          <div className="delivery-chip hero-delivery-chip" data-float="0.8" aria-hidden="true">
+            <Bike size={20} />
+            <span>{content.hero.location}</span>
           </div>
 
           <div className="hero-footer">
@@ -549,13 +705,15 @@ function App() {
         </section>
 
         <section className="location-section" id="gazi">
-          <div className="location-map image-reveal" aria-hidden="true">
-            <span>{content.location.mapWord}</span>
-            <div className="map-line map-line-one" />
-            <div className="map-line map-line-two" />
-            <div className="map-pin">
-              <MapPin size={26} />
-            </div>
+          <div className="location-map image-reveal">
+            <iframe
+              className="location-iframe"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3144.9302224576086!2d23.70753667644428!3d37.97875770038259!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14a1bcde73544fb5%3A0xd7ff0cdaf6903b86!2sCREMA!5e0!3m2!1sel!2sgr!4v1781330993571!5m2!1sel!2sgr"
+              title="Χάρτης CREMA στο Γκάζι"
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
           </div>
           <div className="section-copy location-copy">
             <p className="eyebrow">

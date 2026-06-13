@@ -21,13 +21,9 @@ npm run test:e2e
 
 ## Translation
 
-The site is Greek by default. Live language switching uses Google Cloud Translation Basic when this env var is set:
+The site is Greek by default. The custom language menu controls a hidden Google Website Translator widget, so the local prototype does not need an API key.
 
-```bash
-VITE_GOOGLE_TRANSLATE_API_KEY=your_key_here
-```
-
-For a public frontend key, restrict the key in Google Cloud Console by HTTP referrer and enable only Cloud Translation API. Without the key, Greek remains the stable fallback.
+For a commercial production launch, review the compliance note in `docs/research/crema-gazi-research.md`. Safer production alternatives are curated static translations or a serverless Google Cloud Translation proxy.
 
 ## Project Notes
 

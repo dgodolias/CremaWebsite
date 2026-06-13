@@ -8,7 +8,7 @@ Last updated: 2026-06-13
 - GitHub repository is connected and pushed.
 - GitHub Actions CI runs lint, build and Playwright tests on push/PR.
 - Greek is the default site language.
-- Multi-language switcher is implemented through Google Cloud Translation Basic REST API.
+- Multi-language switcher uses a custom React menu wrapped around a hidden Google Website Translator widget for no-key prototyping.
 - Generated clean logo placeholder is in `public/assets/generated/`.
 - Publicly sourced Crema/Wolt/SE MENY assets are stored locally with source notes.
 
@@ -34,8 +34,7 @@ For visual changes, also capture Playwright screenshots on desktop and mobile an
 
 - Replace public/scraped candidate images with owner-approved originals when available.
 - Replace generated logo with official vector logo if the owner provides one.
-- Restrict `VITE_GOOGLE_TRANSLATE_API_KEY` by HTTP referrer and API scope in Google Cloud Console.
-- Consider a serverless translation proxy before public launch so the Google key is not exposed in browser code.
+- Decide production translation path: keep the widget only with owner/legal approval, add curated static translations, or move Google Cloud Translation behind a serverless proxy.
 - Add deployment target after hosting decision: Vercel, Netlify, Cloudflare Pages or owner server.
 - Add real business schema markup after final phone/address/opening hours are confirmed.
 

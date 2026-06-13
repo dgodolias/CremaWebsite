@@ -6,6 +6,7 @@ These files are public candidates gathered for the first website prototype. Befo
 - `crema-cover.jpg`: SE MENY listing cover from `https://semeny.no/gr/sted/crema`.
 - `crema-brand-large.jpg`: SE MENY listing image from `https://semeny.no/gr/sted/crema`.
 - `crema-*.jpg`: Wolt CDN product/menu images discovered from `https://wolt.com/en/grc/athens/restaurant/crema` and mirrored by SE MENY.
+- `crema-scroll-cover.avif`: owner/user-provided cover candidate copied from local Downloads for the scroll-scrub hero poster/video first frame.
 
 Generated assets live in `public/assets/generated/`.
 

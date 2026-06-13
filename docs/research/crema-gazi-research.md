@@ -85,8 +85,8 @@ Project response:
 - vary section rhythm: cinematic hero, marquee, asymmetric story block, product rail, gallery, map/location, delivery panel,
 - use motion only where it supports premium storefront feel.
 
-## Translation API Note
+## Translation Note
 
-- Google Cloud Translation documentation says Cloud Translation lets websites and programs dynamically translate text between language pairs.
-- Implementation uses the Basic REST endpoint `https://translation.googleapis.com/language/translate/v2` with `VITE_GOOGLE_TRANSLATE_API_KEY`.
-- Because this is currently a static frontend app, the key must be restricted by HTTP referrer in Google Cloud Console. A later production hardening step can move translation calls behind a serverless proxy.
+- Current prototype implementation uses a hidden Google Translate Website Translator widget controlled by Crema's custom React language menu, so local development does not need an API key.
+- Google Search Central's 2020 Website Translator widget note says the no-key Website Translator widget access is restricted to government, non-profit, and/or non-commercial COVID-response websites, and recommends Cloud Translation API for other websites. For CREMA's commercial production site, keep this as a prototype convenience unless the owner approves the compliance risk.
+- Production-safe alternative: move translation calls behind a serverless proxy using Google Cloud Translation, or commit curated static translations for the key languages.

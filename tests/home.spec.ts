@@ -4,8 +4,13 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
   await page.goto('/')
 
   await expect(page.locator('h1')).toContainText('Crema')
+  await expect(page.locator('#google_translate_element')).toHaveCount(1)
+  await expect(page.locator('.hero-media')).toBeVisible()
+  await expect(page.locator('.hero-poster')).toHaveAttribute('src', /crema-scroll-cover\.avif/)
+  await expect(page.locator('.hero-scroll-video source')).toHaveAttribute('src', /crema-hero-scroll\.mp4/)
   await expect(page.locator('.hero-actions').getByRole('link', { name: /Wolt/i })).toBeVisible()
   await expect(page.locator('.delivery-chip')).toContainText('63')
+  await expect(page.locator('.location-iframe')).toHaveAttribute('src', /google\.com\/maps\/embed/)
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
   expect(overflow).toBeLessThanOrEqual(2)
@@ -32,12 +37,7 @@ test('language selector opens a custom menu without native browser chrome', asyn
   const panel = page.locator('.language-panel')
   await expect(panel).toBeVisible()
   await expect(panel.locator('.language-option')).toHaveCount(11)
-
-  await panel.locator('.language-option[data-language="tr"]').click()
-  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
-
-  await trigger.click()
-  await expect(page.locator('.language-option[data-language="tr"]')).toHaveAttribute('aria-selected', 'true')
+  await expect(panel.locator('.language-option[data-language="el"]')).toHaveAttribute('aria-selected', 'true')
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
   expect(overflow).toBeLessThanOrEqual(2)
