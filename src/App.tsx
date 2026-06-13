@@ -364,6 +364,7 @@ function App() {
         '--hero-scroll-darken': 0,
         '--sequence-canvas-opacity': 0.94,
         '--sequence-shade-opacity': 1,
+        '--sequence-image-scale': 1.045,
       })
       gsap.to('.reveal-line', {
         yPercent: 0,
@@ -373,8 +374,8 @@ function App() {
         ease: 'power4.out',
       })
 
-      gsap.from('.hero-media', {
-        scale: 1.08,
+      gsap.from(rootRef.current, {
+        '--sequence-image-scale': 1.075,
         duration: 1.5,
         ease: 'power3.out',
       })
@@ -426,15 +427,20 @@ function App() {
       let heroSequenceCancelled = false
       const heroInitialPreloadCount = 12
 
+      const getHeroCanvasSize = () => ({
+        width: Math.max(1, heroMedia?.clientWidth || heroCanvas?.offsetWidth || window.innerWidth),
+        height: Math.max(1, heroMedia?.clientHeight || heroCanvas?.offsetHeight || window.innerHeight),
+      })
+
       const paintCoverFrame = (image: HTMLImageElement) => {
         if (!heroCanvas || !heroContext || !image.naturalWidth || !image.naturalHeight) return
 
-        const rect = heroCanvas.getBoundingClientRect()
-        const scale = Math.max(rect.width / image.naturalWidth, rect.height / image.naturalHeight)
+        const canvasSize = getHeroCanvasSize()
+        const scale = Math.max(canvasSize.width / image.naturalWidth, canvasSize.height / image.naturalHeight)
         const width = image.naturalWidth * scale
         const height = image.naturalHeight * scale
-        const x = (rect.width - width) / 2
-        const y = (rect.height - height) / 2
+        const x = (canvasSize.width - width) / 2
+        const y = (canvasSize.height - height) / 2
 
         heroContext.drawImage(image, x, y, width, height)
       }
@@ -453,9 +459,9 @@ function App() {
         if (mix > 0 && (!upperFrame?.complete || !upperFrame.naturalWidth)) return
         if (!force && Math.abs(activeHeroFrame - clampedProgress) < 0.001) return
 
-        const rect = heroCanvas.getBoundingClientRect()
+        const canvasSize = getHeroCanvasSize()
         heroContext.globalAlpha = 1
-        heroContext.clearRect(0, 0, rect.width, rect.height)
+        heroContext.clearRect(0, 0, canvasSize.width, canvasSize.height)
         paintCoverFrame(lowerFrame)
 
         if (mix > 0 && upperFrame?.complete && upperFrame.naturalWidth) {
@@ -494,10 +500,10 @@ function App() {
       const resizeHeroCanvas = () => {
         if (!heroCanvas || !heroContext) return
 
-        const rect = heroCanvas.getBoundingClientRect()
+        const canvasSize = getHeroCanvasSize()
         const dpr = Math.min(window.devicePixelRatio || 1, 2)
-        const width = Math.max(1, Math.round(rect.width * dpr))
-        const height = Math.max(1, Math.round(rect.height * dpr))
+        const width = Math.max(1, Math.round(canvasSize.width * dpr))
+        const height = Math.max(1, Math.round(canvasSize.height * dpr))
 
         if (heroCanvas.width !== width || heroCanvas.height !== height) {
           heroCanvas.width = width
@@ -571,6 +577,7 @@ function App() {
               '--hero-scroll-darken': self.progress * 0.8,
               '--sequence-canvas-opacity': 0.94,
               '--sequence-shade-opacity': 1,
+              '--sequence-image-scale': 1.045 + self.progress * 0.035,
             })
           },
         }),
@@ -585,6 +592,7 @@ function App() {
               '--hero-scroll-darken': revealThenFadeDarken(self.progress),
               '--sequence-canvas-opacity': 0.9,
               '--sequence-shade-opacity': 0.82,
+              '--sequence-image-scale': 1.08,
             })
           },
         }),
@@ -599,6 +607,7 @@ function App() {
               '--hero-scroll-darken': revealThenFadeDarken(self.progress),
               '--sequence-canvas-opacity': 0.88,
               '--sequence-shade-opacity': 0.74,
+              '--sequence-image-scale': 1.08,
             })
           },
         }),
@@ -615,6 +624,7 @@ function App() {
             '--hero-scroll-darken': 0,
             '--sequence-canvas-opacity': 0.94,
             '--sequence-shade-opacity': 1,
+            '--sequence-image-scale': 1.045,
           })
         },
       })
@@ -627,17 +637,6 @@ function App() {
         sequenceTriggers.forEach((trigger) => trigger.kill())
         resetSequenceTrigger.kill()
       }
-
-      gsap.to('.hero-media', {
-        scale: 1.12,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.hero',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: true,
-        },
-      })
 
       gsap.to('.hero-copy', {
         y: -36,

@@ -73,6 +73,7 @@ img {
   --hero-scroll-darken: 0;
   --sequence-canvas-opacity: 0.94;
   --sequence-shade-opacity: 1;
+  --sequence-image-scale: 1.045;
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -443,7 +444,7 @@ body {
   overflow: hidden;
   background: var(--ink);
   pointer-events: none;
-  will-change: filter, transform;
+  will-change: filter;
 }
 
 .hero-media::after {
@@ -465,7 +466,8 @@ body {
   object-fit: cover;
   object-position: center;
   filter: saturate(1.08) contrast(1.04) brightness(1);
-  transform: scale(1.025);
+  transform: scale(var(--sequence-image-scale));
+  transform-origin: center;
 }
 
 .hero-sequence-canvas {

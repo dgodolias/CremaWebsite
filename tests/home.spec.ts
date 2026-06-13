@@ -65,6 +65,19 @@ test('hero canvas sequence scrubs when the desktop page scrolls', async ({ brows
     return canvas && canvas.dataset.frame === '0' && canvas.width > 0 && canvas.height > 0
   })
 
+  const canvasSizing = await page.evaluate(() => {
+    const canvas = document.querySelector<HTMLCanvasElement>('.hero-sequence-canvas')!
+    const media = document.querySelector<HTMLElement>('.hero-media')!
+    return {
+      bitmapWidth: canvas.width,
+      bitmapHeight: canvas.height,
+      mediaWidth: media.clientWidth,
+      mediaHeight: media.clientHeight,
+    }
+  })
+  expect(Math.abs(canvasSizing.bitmapWidth - canvasSizing.mediaWidth)).toBeLessThanOrEqual(2)
+  expect(Math.abs(canvasSizing.bitmapHeight - canvasSizing.mediaHeight)).toBeLessThanOrEqual(2)
+
   const initialDarken = await page.evaluate(() =>
     Number.parseFloat(getComputedStyle(document.querySelector('.site-shell')!).getPropertyValue('--hero-scroll-darken')),
   )
