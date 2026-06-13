@@ -71,11 +71,20 @@ img {
   --pointer-x: 0;
   --pointer-y: 0;
   --hero-scroll-darken: 0;
+  --sequence-canvas-opacity: 0.94;
+  --sequence-shade-opacity: 1;
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   background:
     linear-gradient(90deg, rgba(255, 253, 247, 0.035) 1px, transparent 1px) 0 0 / 76px 76px,
     linear-gradient(180deg, #15120f 0%, #0f0f0d 54%, #fff8ec 54%, #fff8ec 100%);
+}
+
+main,
+.site-footer {
+  position: relative;
+  z-index: 2;
 }
 
 .scroll-progress {
@@ -154,6 +163,18 @@ img {
   background: rgba(255, 253, 247, 0.08);
 }
 
+.desktop-nav .nav-menu-link {
+  gap: 7px;
+  color: var(--ink);
+  background: var(--green);
+}
+
+.desktop-nav .nav-menu-link:hover,
+.desktop-nav .nav-menu-link:focus-visible {
+  color: var(--ink);
+  background: var(--orange);
+}
+
 .icon-action,
 .delivery-actions a {
   display: grid;
@@ -176,6 +197,10 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+}
+
+.menu-icon-action {
+  display: none;
 }
 
 body > .skiptranslate,
@@ -412,11 +437,12 @@ body {
 }
 
 .hero-media {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: -3;
+  z-index: 0;
   overflow: hidden;
   background: var(--ink);
+  pointer-events: none;
   will-change: filter, transform;
 }
 
@@ -448,7 +474,7 @@ body {
 }
 
 .hero-media.is-canvas-ready .hero-sequence-canvas {
-  opacity: 0.94;
+  opacity: var(--sequence-canvas-opacity);
 }
 
 .hero-media-shade {
@@ -459,6 +485,8 @@ body {
     radial-gradient(circle at 82% 18%, rgba(142, 207, 79, 0.18), transparent 27%),
     linear-gradient(90deg, rgba(16, 16, 14, 0.74) 0%, rgba(16, 16, 14, 0.46) 42%, rgba(16, 16, 14, 0.08) 100%),
     linear-gradient(180deg, rgba(16, 16, 14, 0.12) 0%, rgba(16, 16, 14, 0.48) 100%);
+  opacity: var(--sequence-shade-opacity);
+  transition: opacity 180ms ease;
 }
 
 .hero-noise {
@@ -762,8 +790,27 @@ h1 {
 
 .signature-section {
   color: var(--white);
+  overflow: hidden;
+  background: transparent;
+  isolation: isolate;
+}
+
+.signature-section::before,
+.delivery-section::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  content: '';
+  pointer-events: none;
   background:
-    linear-gradient(180deg, #10100e 0%, #17120e 100%);
+    radial-gradient(circle at 88% 10%, rgba(142, 207, 79, 0.13), transparent 30%),
+    linear-gradient(180deg, rgba(16, 16, 14, 0.84) 0%, rgba(16, 16, 14, 0.58) 48%, rgba(16, 16, 14, 0.88) 100%);
+}
+
+.signature-section > *,
+.delivery-section > * {
+  position: relative;
+  z-index: 1;
 }
 
 .section-heading {
@@ -998,8 +1045,9 @@ h1 {
   grid-template-columns: minmax(0, 1fr) minmax(320px, 0.75fr);
   align-items: center;
   color: var(--white);
-  background:
-    linear-gradient(180deg, #10100e 0%, #16110e 100%);
+  overflow: hidden;
+  background: transparent;
+  isolation: isolate;
 }
 
 .delivery-copy p:not(.eyebrow) {
@@ -1107,15 +1155,35 @@ h1 {
   .topbar {
     top: 10px;
     width: calc(100% - 18px);
-    gap: 10px;
+    gap: 8px;
+    grid-template-columns: auto 1fr;
+  }
+
+  .brand-lockup .brand-logo {
+    width: 96px;
+    height: 42px;
   }
 
   .desktop-nav {
     display: none;
   }
 
+  .topbar-actions {
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .icon-action {
+    width: 42px;
+    height: 42px;
+  }
+
+  .menu-icon-action {
+    display: grid;
+  }
+
   .language-picker {
-    max-width: 158px;
+    max-width: 132px;
   }
 
   .language-kicker {
@@ -1123,9 +1191,16 @@ h1 {
   }
 
   .language-trigger {
-    min-width: 148px;
+    min-width: 126px;
+    height: 42px;
     grid-template-columns: minmax(0, 1fr) auto auto;
-    padding-inline: 13px 11px;
+    gap: 7px;
+    padding-inline: 11px 9px;
+  }
+
+  .language-current {
+    gap: 5px;
+    font-size: 0.72rem;
   }
 
   .language-panel {

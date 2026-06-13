@@ -3,6 +3,7 @@ import {
   ArrowUpRight,
   AtSign,
   Bike,
+  BookOpenText,
   Check,
   ChevronDown,
   Clock3,
@@ -359,7 +360,11 @@ function App() {
     const context = gsap.context(() => {
       gsap.set('.reveal-line', { yPercent: 112, rotate: 2 })
       gsap.set('.story-section', { opacity: 0, y: 64 })
-      gsap.set(rootRef.current, { '--hero-scroll-darken': 0 })
+      gsap.set(rootRef.current, {
+        '--hero-scroll-darken': 0,
+        '--sequence-canvas-opacity': 0.94,
+        '--sequence-shade-opacity': 1,
+      })
       gsap.to('.reveal-line', {
         yPercent: 0,
         rotate: 0,
@@ -416,11 +421,12 @@ function App() {
       const heroFrames: Array<HTMLImageElement | undefined> = []
       let activeHeroFrame = -1
       let targetHeroFrame = 0
+      let targetHeroFrameProgress = 0
       let heroPreloadTimer = 0
       let heroPreloadCursor = 1
       let heroSequenceCancelled = false
 
-      const drawCoverFrame = (image: HTMLImageElement) => {
+      const paintCoverFrame = (image: HTMLImageElement) => {
         if (!heroCanvas || !heroContext || !image.naturalWidth || !image.naturalHeight) return
 
         const rect = heroCanvas.getBoundingClientRect()
@@ -430,18 +436,36 @@ function App() {
         const x = (rect.width - width) / 2
         const y = (rect.height - height) / 2
 
-        heroContext.clearRect(0, 0, rect.width, rect.height)
         heroContext.drawImage(image, x, y, width, height)
       }
 
-      const drawHeroFrame = (frameIndex: number, force = false) => {
-        const frame = heroFrames[frameIndex]
-        if (!heroCanvas || !heroMedia || !frame?.complete || !frame.naturalWidth) return
-        if (!force && activeHeroFrame === frameIndex) return
+      const drawHeroFrame = (frameProgress: number, force = false) => {
+        if (!heroCanvas || !heroContext || !heroMedia) return
 
-        activeHeroFrame = frameIndex
-        heroCanvas.dataset.frame = String(frameIndex)
-        drawCoverFrame(frame)
+        const clampedProgress = Math.min(heroSequenceFrameCount - 1, Math.max(0, frameProgress))
+        const lowerFrameIndex = Math.floor(clampedProgress)
+        const upperFrameIndex = Math.min(heroSequenceFrameCount - 1, lowerFrameIndex + 1)
+        const mix = clampedProgress - lowerFrameIndex
+        const lowerFrame = heroFrames[lowerFrameIndex]
+        const upperFrame = heroFrames[upperFrameIndex]
+
+        if (!lowerFrame?.complete || !lowerFrame.naturalWidth) return
+        if (!force && Math.abs(activeHeroFrame - clampedProgress) < 0.001) return
+
+        const rect = heroCanvas.getBoundingClientRect()
+        heroContext.globalAlpha = 1
+        heroContext.clearRect(0, 0, rect.width, rect.height)
+        paintCoverFrame(lowerFrame)
+
+        if (mix > 0 && upperFrame?.complete && upperFrame.naturalWidth) {
+          heroContext.globalAlpha = mix
+          paintCoverFrame(upperFrame)
+          heroContext.globalAlpha = 1
+        }
+
+        activeHeroFrame = clampedProgress
+        heroCanvas.dataset.frame = String(Math.round(clampedProgress))
+        heroCanvas.dataset.frameProgress = clampedProgress.toFixed(3)
         heroMedia.classList.add('is-canvas-ready')
       }
 
@@ -454,8 +478,12 @@ function App() {
         image.src = heroSequenceFrame(frameIndex + 1)
         image.onload = () => {
           if (heroSequenceCancelled) return
-          if (frameIndex === targetHeroFrame || activeHeroFrame === -1) {
-            drawHeroFrame(frameIndex, true)
+          if (
+            frameIndex === Math.floor(targetHeroFrameProgress) ||
+            frameIndex === Math.ceil(targetHeroFrameProgress) ||
+            activeHeroFrame === -1
+          ) {
+            drawHeroFrame(activeHeroFrame === -1 ? frameIndex : targetHeroFrameProgress, true)
           }
         }
         heroFrames[frameIndex] = image
@@ -480,13 +508,15 @@ function App() {
       }
 
       const queueHeroFrame = (progress: number) => {
-        targetHeroFrame = Math.min(heroSequenceFrameCount - 1, Math.max(0, Math.round(progress * (heroSequenceFrameCount - 1))))
+        targetHeroFrameProgress = Math.min(heroSequenceFrameCount - 1, Math.max(0, progress * (heroSequenceFrameCount - 1)))
+        targetHeroFrame = Math.round(targetHeroFrameProgress)
 
         if (!heroSequenceRaf) {
           heroSequenceRaf = requestAnimationFrame(() => {
             heroSequenceRaf = 0
-            loadHeroFrame(targetHeroFrame)
-            drawHeroFrame(targetHeroFrame)
+            loadHeroFrame(Math.floor(targetHeroFrameProgress))
+            loadHeroFrame(Math.ceil(targetHeroFrameProgress))
+            drawHeroFrame(targetHeroFrameProgress)
 
             for (let offset = 1; offset <= 5; offset += 1) {
               if (targetHeroFrame + offset < heroSequenceFrameCount) loadHeroFrame(targetHeroFrame + offset)
@@ -515,12 +545,74 @@ function App() {
       heroPreloadTimer = window.setTimeout(preloadHeroFrames, 850)
       window.addEventListener('resize', resizeHeroCanvas)
 
-      const heroScrub = ScrollTrigger.create({
+      const sequenceFrameForRange = (progress: number, startFrame: number, endFrame: number) =>
+        startFrame + Math.min(1, Math.max(0, progress)) * (endFrame - startFrame)
+
+      const revealThenFadeDarken = (progress: number) => {
+        const clamped = Math.min(1, Math.max(0, progress))
+        if (clamped < 0.42) return 0.92 - (clamped / 0.42) * 0.56
+        if (clamped > 0.82) return 0.36 + ((clamped - 0.82) / 0.18) * 0.48
+        return 0.36
+      }
+
+      const sequenceTriggers = [
+        ScrollTrigger.create({
+          trigger: '.hero',
+          start: 'top top',
+          end: 'bottom top',
+          scrub: true,
+          onUpdate: (self) => {
+            queueHeroFrame(sequenceFrameForRange(self.progress, 0, 45) / (heroSequenceFrameCount - 1))
+            gsap.set(rootRef.current, {
+              '--hero-scroll-darken': self.progress * 0.8,
+              '--sequence-canvas-opacity': 0.94,
+              '--sequence-shade-opacity': 1,
+            })
+          },
+        }),
+        ScrollTrigger.create({
+          trigger: '.signature-section',
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: true,
+          onUpdate: (self) => {
+            queueHeroFrame(sequenceFrameForRange(self.progress, 45, 84) / (heroSequenceFrameCount - 1))
+            gsap.set(rootRef.current, {
+              '--hero-scroll-darken': revealThenFadeDarken(self.progress),
+              '--sequence-canvas-opacity': 0.9,
+              '--sequence-shade-opacity': 0.82,
+            })
+          },
+        }),
+        ScrollTrigger.create({
+          trigger: '.delivery-section',
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: true,
+          onUpdate: (self) => {
+            queueHeroFrame(sequenceFrameForRange(self.progress, 84, heroSequenceFrameCount - 1) / (heroSequenceFrameCount - 1))
+            gsap.set(rootRef.current, {
+              '--hero-scroll-darken': revealThenFadeDarken(self.progress),
+              '--sequence-canvas-opacity': 0.88,
+              '--sequence-shade-opacity': 0.74,
+            })
+          },
+        }),
+      ]
+
+      const resetSequenceTrigger = ScrollTrigger.create({
         trigger: '.hero',
         start: 'top top',
         end: 'bottom top',
         scrub: true,
-        onUpdate: (self) => queueHeroFrame(self.progress),
+        onLeaveBack: () => {
+          queueHeroFrame(0)
+          gsap.set(rootRef.current, {
+            '--hero-scroll-darken': 0,
+            '--sequence-canvas-opacity': 0.94,
+            '--sequence-shade-opacity': 1,
+          })
+        },
       })
 
       cleanupHeroSequence = () => {
@@ -528,22 +620,12 @@ function App() {
         cancelAnimationFrame(heroSequenceRaf)
         window.clearTimeout(heroPreloadTimer)
         window.removeEventListener('resize', resizeHeroCanvas)
-        heroScrub.kill()
+        sequenceTriggers.forEach((trigger) => trigger.kill())
+        resetSequenceTrigger.kill()
       }
 
       gsap.to('.hero-media', {
         scale: 1.12,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.hero',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: true,
-        },
-      })
-
-      gsap.to(rootRef.current, {
-        '--hero-scroll-darken': 0.78,
         ease: 'none',
         scrollTrigger: {
           trigger: '.hero',
@@ -631,6 +713,7 @@ function App() {
   return (
     <div className="site-shell" ref={rootRef}>
       <div className="scroll-progress" />
+      <HeroScrollMedia />
       <GoogleTranslateBridge language={language} onStateChange={setTranslationState} />
 
       <header className="topbar">
@@ -643,6 +726,11 @@ function App() {
               {item}
             </a>
           ))}
+          <a className="nav-menu-link" href="https://quar.gr/crema" target="_blank" rel="noreferrer" aria-label="Crema menu">
+            <BookOpenText size={15} />
+            Menu
+            <ArrowUpRight size={14} />
+          </a>
         </nav>
         <div className="topbar-actions">
           <LanguageMenu
@@ -651,6 +739,9 @@ function App() {
             state={translationState}
             onChange={handleLanguageChange}
           />
+          <a className="icon-action menu-icon-action" href="https://quar.gr/crema" target="_blank" rel="noreferrer" aria-label="Crema menu">
+            <BookOpenText size={18} />
+          </a>
           <a className="icon-action" href="tel:+302103467213" aria-label={content.meta.call}>
             <Phone size={18} />
           </a>
@@ -659,7 +750,6 @@ function App() {
 
       <main id="top">
         <section className="hero" aria-labelledby="hero-title">
-          <HeroScrollMedia />
           <div className="hero-noise" />
           <div className="hero-copy">
             <p className="eyebrow">

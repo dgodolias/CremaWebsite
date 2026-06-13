@@ -8,6 +8,7 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
   await expect(page.locator('.hero-media')).toBeVisible()
   await expect(page.locator('.hero-poster')).toHaveAttribute('src', /crema-scroll-cover\.avif/)
   await expect(page.locator('.hero-sequence-canvas')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Crema menu' })).toHaveAttribute('href', 'https://quar.gr/crema')
   await expect(page.locator('.hero-actions').getByRole('link', { name: /Wolt/i })).toBeVisible()
   await expect(page.locator('.delivery-chip')).toContainText('63')
   await expect(page.locator('.location-iframe')).toHaveAttribute('src', /google\.com\/maps\/embed/)
@@ -19,7 +20,7 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
 test('key sections stay reachable on mobile', async ({ page }) => {
   await page.goto('/')
 
-  await expect(page.locator('.topbar .icon-action')).toBeVisible()
+  await expect(page.locator('.topbar .icon-action[href^="tel:"]')).toBeVisible()
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
 
   await expect(page.locator('.site-footer')).toContainText('63')
@@ -74,4 +75,15 @@ test('hero canvas sequence scrubs when the desktop page scrolls', async ({ brows
       { timeout: 8_000 },
     )
     .toBeGreaterThan(0.25)
+
+  for (let step = 0; step < 5; step += 1) {
+    await page.mouse.wheel(0, 900)
+    await page.waitForTimeout(160)
+  }
+
+  await expect
+    .poll(() => page.locator('.hero-sequence-canvas').evaluate((element) => Number((element as HTMLCanvasElement).dataset.frame)), {
+      timeout: 8_000,
+    })
+    .toBeGreaterThan(45)
 })

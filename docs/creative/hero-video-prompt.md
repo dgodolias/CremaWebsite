@@ -43,3 +43,8 @@ ffmpeg -y -i public/assets/generated/crema-hero-scroll.mp4 -vf "fps=12,scale=144
 
 - Keep the poster image visible until the canvas has drawn the first decoded frame.
 - The canvas preloads nearby frames first, then progressively warms the rest of the sequence in small batches.
+- The canvas renderer crossfades between adjacent decoded frames using decimal scroll progress. This keeps scroll motion smoother without increasing the current 120-frame payload.
+- The same fixed canvas layer now continues through the dark sections instead of creating new media elements:
+  - Hero: frames 0-45, image starts clear and fades toward black.
+  - Signatures: frames 45-84, starts black, reveals the timeline, then fades down for the next transition.
+  - Delivery: frames 84-119, starts black, reveals the timeline, then fades down near the end.
