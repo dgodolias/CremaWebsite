@@ -3,8 +3,11 @@ import {
   ArrowUpRight,
   AtSign,
   Bike,
+  Check,
+  ChevronDown,
   Clock3,
   Coffee,
+  Globe2,
   MapPin,
   Phone,
   ShoppingBag,
@@ -62,6 +65,7 @@ const productImages = [
 ]
 
 const navTargets = ['story', 'signatures', 'gazi', 'delivery']
+type TranslationState = 'idle' | 'loading' | 'ready' | 'missing-key' | 'error'
 
 function MagneticLink({
   href,
@@ -94,11 +98,113 @@ function MagneticLink({
   )
 }
 
+function LanguageMenu({
+  language,
+  label,
+  state,
+  onChange,
+}: {
+  language: LanguageCode
+  label: string
+  state: TranslationState
+  onChange: (language: LanguageCode) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const currentLanguage = supportedLanguages.find((item) => item.code === language) ?? supportedLanguages[0]
+  const statusLabel: Record<TranslationState, string> = {
+    idle: 'Έτοιμο',
+    loading: 'Μετάφραση σε εξέλιξη',
+    ready: 'Μετάφραση ενεργή',
+    'missing-key': 'Λείπει Google Translate API key',
+    error: 'Προβολή στα Ελληνικά',
+  }
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target
+      if (target instanceof Node && !menuRef.current?.contains(target)) {
+        setIsOpen(false)
+      }
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [isOpen])
+
+  return (
+    <div className="language-picker" ref={menuRef}>
+      <button
+        className="language-trigger"
+        type="button"
+        aria-label={label}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((value) => !value)}
+      >
+        <span className="language-kicker">{label}</span>
+        <span className="language-current">
+          <Globe2 size={15} />
+          <span>{currentLanguage.label}</span>
+        </span>
+        <span className={clsx('language-state-dot', `is-${state}`)} title={statusLabel[state]} />
+        <ChevronDown className={clsx('language-chevron', isOpen && 'is-open')} size={15} />
+      </button>
+
+      {isOpen && (
+        <div className="language-panel" role="listbox" aria-label={label}>
+          {supportedLanguages.map((item) => {
+            const isSelected = item.code === language
+
+            return (
+              <button
+                className={clsx('language-option', isSelected && 'is-selected')}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                data-language={item.code}
+                key={item.code}
+                onClick={() => {
+                  onChange(item.code)
+                  setIsOpen(false)
+                }}
+              >
+                <span className="language-name">{item.label}</span>
+                <span className="language-code">{item.code.toUpperCase()}</span>
+                {isSelected && <Check size={15} aria-hidden="true" />}
+              </button>
+            )
+          })}
+          {state !== 'idle' && (
+            <p className="language-panel-status" role="status">
+              <span className={clsx('language-state-dot', `is-${state}`)} />
+              {statusLabel[state]}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function App() {
   const rootRef = useRef<HTMLDivElement>(null)
   const [language, setLanguage] = useState<LanguageCode>('el')
   const [content, setContent] = useState<SiteContent>(greekContent)
-  const [translationState, setTranslationState] = useState<'idle' | 'loading' | 'ready' | 'missing-key' | 'error'>('idle')
+  const [translationState, setTranslationState] = useState<TranslationState>('idle')
 
   useEffect(() => {
     let ignore = false
@@ -267,20 +373,12 @@ function App() {
           ))}
         </nav>
         <div className="topbar-actions">
-          <label className="language-picker">
-            <span>{content.language.label}</span>
-            <select
-              value={language}
-              onChange={(event) => setLanguage(event.target.value as LanguageCode)}
-              aria-label={content.language.label}
-            >
-              {supportedLanguages.map((item) => (
-                <option value={item.code} key={item.code}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <LanguageMenu
+            language={language}
+            label={content.language.label}
+            state={translationState}
+            onChange={setLanguage}
+          />
           <a className="icon-action" href="tel:+302103467213" aria-label={content.meta.call}>
             <Phone size={18} />
           </a>
