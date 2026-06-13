@@ -7,7 +7,7 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
   await expect(page.locator('#google_translate_element')).toHaveCount(1)
   await expect(page.locator('.hero-media')).toBeVisible()
   await expect(page.locator('.hero-poster')).toHaveAttribute('src', /crema-scroll-cover\.avif/)
-  await expect(page.locator('.hero-scroll-video source')).toHaveAttribute('src', /crema-hero-scroll\.mp4/)
+  await expect(page.locator('.hero-sequence-canvas')).toBeVisible()
   await expect(page.locator('.hero-actions').getByRole('link', { name: /Wolt/i })).toBeVisible()
   await expect(page.locator('.delivery-chip')).toContainText('63')
   await expect(page.locator('.location-iframe')).toHaveAttribute('src', /google\.com\/maps\/embed/)
@@ -43,20 +43,35 @@ test('language selector opens a custom menu without native browser chrome', asyn
   expect(overflow).toBeLessThanOrEqual(2)
 })
 
-test('hero video scrubs when the desktop page scrolls', async ({ browserName, page }) => {
-  test.skip(browserName !== 'chromium', 'desktop Chromium gives the most stable media seek signal')
+test('hero canvas sequence scrubs when the desktop page scrolls', async ({ browserName, page }) => {
+  test.skip(browserName !== 'chromium', 'desktop Chromium gives the most stable canvas signal')
 
   await page.goto('/')
   await page.waitForFunction(() => {
-    const video = document.querySelector<HTMLVideoElement>('.hero-scroll-video')
-    return video && video.readyState >= 2 && Number.isFinite(video.duration) && video.duration > 0
+    const canvas = document.querySelector<HTMLCanvasElement>('.hero-sequence-canvas')
+    return canvas && canvas.dataset.frame === '0' && canvas.width > 0 && canvas.height > 0
   })
+
+  const initialDarken = await page.evaluate(() =>
+    Number.parseFloat(getComputedStyle(document.querySelector('.site-shell')!).getPropertyValue('--hero-scroll-darken')),
+  )
+  expect(initialDarken).toBeLessThan(0.05)
 
   await page.mouse.wheel(0, 900)
 
   await expect
-    .poll(() => page.locator('.hero-scroll-video').evaluate((element) => (element as HTMLVideoElement).currentTime), {
+    .poll(() => page.locator('.hero-sequence-canvas').evaluate((element) => Number((element as HTMLCanvasElement).dataset.frame)), {
       timeout: 8_000,
     })
+    .toBeGreaterThan(12)
+
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() =>
+          Number.parseFloat(getComputedStyle(document.querySelector('.site-shell')!).getPropertyValue('--hero-scroll-darken')),
+        ),
+      { timeout: 8_000 },
+    )
     .toBeGreaterThan(0.25)
 })

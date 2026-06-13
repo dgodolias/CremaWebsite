@@ -10,7 +10,7 @@ Use `public/assets/sourced/crema-scroll-cover.avif` as the exact first frame/ref
 - Frame rate: 24 or 30 fps.
 - Motion style: continuous, no cuts, scrub-safe, smooth forward and reverse.
 - Export target for the site: `public/assets/generated/crema-hero-scroll.mp4`.
-- Optional override in `.env.local`: `VITE_HERO_SCROLL_VIDEO=/assets/generated/crema-hero-scroll.mp4`.
+- Canvas sequence target for smooth scroll: `public/assets/generated/hero-sequence/frame-001.webp` through `frame-120.webp`.
 
 ## Prompt
 
@@ -26,13 +26,20 @@ Exact first-frame image-to-video. Premium overhead dessert cafe table, very slow
 
 ## Implementation Notes
 
-- Scroll scrubbing seeks the video with `HTMLMediaElement.currentTime`, so the delivery file must be encoded for frequent seeking.
-- Use an all-intra/keyframe-friendly MP4 for the scroll version, not only a normal streaming MP4.
+- The live hero now uses a canvas image sequence for smoother scroll scrubbing. The MP4 stays as the source export and fallback asset.
+- Scroll scrubbing draws a numbered WebP frame to `<canvas>` instead of constantly seeking `HTMLMediaElement.currentTime`.
+- Use an all-intra/keyframe-friendly MP4 before extracting frames, not only a normal streaming MP4.
 - Current FFmpeg command used for `public/assets/generated/crema-hero-scroll.mp4`:
 
 ```bash
 ffmpeg -y -i public/assets/generated/crema-hero-scroll.mp4 -an -c:v libx264 -preset veryfast -crf 23 -g 1 -keyint_min 1 -sc_threshold 0 -pix_fmt yuv420p -movflags +faststart public/assets/generated/crema-hero-scroll-scrub.mp4
 ```
 
-- Keep a poster image visible until the browser has decoded actual video data. Do not fade in the video on `loadedmetadata`; wait for `loadeddata`.
-- The React source appends a cache-busting query to the MP4 URL after each scrub export update.
+- Current FFmpeg command used for the 120-frame canvas sequence:
+
+```bash
+ffmpeg -y -i public/assets/generated/crema-hero-scroll.mp4 -vf "fps=12,scale=1440:-2" -c:v libwebp -quality 72 -compression_level 4 public/assets/generated/hero-sequence/frame-%03d.webp
+```
+
+- Keep the poster image visible until the canvas has drawn the first decoded frame.
+- The canvas preloads nearby frames first, then progressively warms the rest of the sequence in small batches.

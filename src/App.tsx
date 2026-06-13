@@ -21,8 +21,9 @@ import { greekContent, supportedLanguages, type LanguageCode } from './content'
 
 const asset = (name: string) => `/assets/sourced/${name}`
 const heroPoster = asset('crema-scroll-cover.avif')
-const heroScrollVideoSource = import.meta.env.VITE_HERO_SCROLL_VIDEO ?? '/assets/generated/crema-hero-scroll.mp4'
-const heroScrollVideo = `${heroScrollVideoSource}${heroScrollVideoSource.includes('?') ? '&' : '?'}v=20260613-scrub`
+const heroSequenceFrameCount = 120
+const heroSequenceFrame = (frame: number) =>
+  `/assets/generated/hero-sequence/frame-${String(frame).padStart(3, '0')}.webp`
 
 const signatureImages = [
   asset('crema-waffle-13.jpg'),
@@ -301,26 +302,10 @@ function GoogleTranslateBridge({
 }
 
 function HeroScrollMedia() {
-  const [videoReady, setVideoReady] = useState(false)
-
   return (
     <div className="hero-media" aria-hidden="true">
       <img className="hero-poster" src={heroPoster} alt="" />
-      <video
-        className={clsx('hero-scroll-video', videoReady && 'is-ready')}
-        muted
-        playsInline
-        preload="auto"
-        poster={heroPoster}
-        onLoadedData={(event) => {
-          const video = event.currentTarget
-          video.pause()
-          requestAnimationFrame(() => setVideoReady(true))
-        }}
-        onError={() => setVideoReady(false)}
-      >
-        {heroScrollVideo && <source src={heroScrollVideo} type="video/mp4" />}
-      </video>
+      <canvas className="hero-sequence-canvas" data-frame="0" />
       <div className="hero-media-shade" />
     </div>
   )
@@ -368,12 +353,13 @@ function App() {
     }
     rafId = requestAnimationFrame(raf)
 
-    let cleanupHeroVideo: (() => void) | undefined
-    let heroVideoSeekRaf = 0
+    let cleanupHeroSequence: (() => void) | undefined
+    let heroSequenceRaf = 0
 
     const context = gsap.context(() => {
       gsap.set('.reveal-line', { yPercent: 112, rotate: 2 })
       gsap.set('.story-section', { opacity: 0, y: 64 })
+      gsap.set(rootRef.current, { '--hero-scroll-darken': 0 })
       gsap.to('.reveal-line', {
         yPercent: 0,
         rotate: 0,
@@ -424,47 +410,140 @@ function App() {
         })
       })
 
-      const heroVideo = document.querySelector<HTMLVideoElement>('.hero-scroll-video')
-      let pendingHeroVideoTime = 0
+      const heroCanvas = document.querySelector<HTMLCanvasElement>('.hero-sequence-canvas')
+      const heroMedia = document.querySelector<HTMLElement>('.hero-media')
+      const heroContext = heroCanvas?.getContext('2d', { alpha: false })
+      const heroFrames: Array<HTMLImageElement | undefined> = []
+      let activeHeroFrame = -1
+      let targetHeroFrame = 0
+      let heroPreloadTimer = 0
+      let heroPreloadCursor = 1
+      let heroSequenceCancelled = false
 
-      const commitHeroVideoSeek = () => {
-        heroVideoSeekRaf = 0
-        if (!heroVideo || !Number.isFinite(heroVideo.duration) || heroVideo.duration <= 0) return
-        if (Math.abs(heroVideo.currentTime - pendingHeroVideoTime) > 1 / 48) {
-          heroVideo.currentTime = pendingHeroVideoTime
+      const drawCoverFrame = (image: HTMLImageElement) => {
+        if (!heroCanvas || !heroContext || !image.naturalWidth || !image.naturalHeight) return
+
+        const rect = heroCanvas.getBoundingClientRect()
+        const scale = Math.max(rect.width / image.naturalWidth, rect.height / image.naturalHeight)
+        const width = image.naturalWidth * scale
+        const height = image.naturalHeight * scale
+        const x = (rect.width - width) / 2
+        const y = (rect.height - height) / 2
+
+        heroContext.clearRect(0, 0, rect.width, rect.height)
+        heroContext.drawImage(image, x, y, width, height)
+      }
+
+      const drawHeroFrame = (frameIndex: number, force = false) => {
+        const frame = heroFrames[frameIndex]
+        if (!heroCanvas || !heroMedia || !frame?.complete || !frame.naturalWidth) return
+        if (!force && activeHeroFrame === frameIndex) return
+
+        activeHeroFrame = frameIndex
+        heroCanvas.dataset.frame = String(frameIndex)
+        drawCoverFrame(frame)
+        heroMedia.classList.add('is-canvas-ready')
+      }
+
+      const loadHeroFrame = (frameIndex: number) => {
+        if (heroFrames[frameIndex]) return heroFrames[frameIndex]
+
+        const image = new Image()
+        image.decoding = 'async'
+        ;(image as HTMLImageElement & { fetchPriority?: string }).fetchPriority = frameIndex < 10 ? 'high' : 'low'
+        image.src = heroSequenceFrame(frameIndex + 1)
+        image.onload = () => {
+          if (heroSequenceCancelled) return
+          if (frameIndex === targetHeroFrame || activeHeroFrame === -1) {
+            drawHeroFrame(frameIndex, true)
+          }
+        }
+        heroFrames[frameIndex] = image
+        return image
+      }
+
+      const resizeHeroCanvas = () => {
+        if (!heroCanvas || !heroContext) return
+
+        const rect = heroCanvas.getBoundingClientRect()
+        const dpr = Math.min(window.devicePixelRatio || 1, 2)
+        const width = Math.max(1, Math.round(rect.width * dpr))
+        const height = Math.max(1, Math.round(rect.height * dpr))
+
+        if (heroCanvas.width !== width || heroCanvas.height !== height) {
+          heroCanvas.width = width
+          heroCanvas.height = height
+        }
+
+        heroContext.setTransform(dpr, 0, 0, dpr, 0, 0)
+        drawHeroFrame(activeHeroFrame >= 0 ? activeHeroFrame : 0, true)
+      }
+
+      const queueHeroFrame = (progress: number) => {
+        targetHeroFrame = Math.min(heroSequenceFrameCount - 1, Math.max(0, Math.round(progress * (heroSequenceFrameCount - 1))))
+
+        if (!heroSequenceRaf) {
+          heroSequenceRaf = requestAnimationFrame(() => {
+            heroSequenceRaf = 0
+            loadHeroFrame(targetHeroFrame)
+            drawHeroFrame(targetHeroFrame)
+
+            for (let offset = 1; offset <= 5; offset += 1) {
+              if (targetHeroFrame + offset < heroSequenceFrameCount) loadHeroFrame(targetHeroFrame + offset)
+              if (targetHeroFrame - offset >= 0) loadHeroFrame(targetHeroFrame - offset)
+            }
+          })
         }
       }
 
-      const syncHeroVideo = (progress: number) => {
-        if (!heroVideo || !Number.isFinite(heroVideo.duration) || heroVideo.duration <= 0) return
-        pendingHeroVideoTime = Math.min(heroVideo.duration - 1 / 24, Math.max(0, heroVideo.duration * progress))
-        if (!heroVideoSeekRaf) {
-          heroVideoSeekRaf = requestAnimationFrame(commitHeroVideoSeek)
+      const preloadHeroFrames = () => {
+        if (heroSequenceCancelled) return
+
+        const batchSize = heroPreloadCursor < 18 ? 2 : 1
+        for (let count = 0; count < batchSize && heroPreloadCursor < heroSequenceFrameCount; count += 1) {
+          loadHeroFrame(heroPreloadCursor)
+          heroPreloadCursor += 1
+        }
+
+        if (heroPreloadCursor < heroSequenceFrameCount) {
+          heroPreloadTimer = window.setTimeout(preloadHeroFrames, heroPreloadCursor < 18 ? 120 : 190)
         }
       }
+
+      loadHeroFrame(0)
+      resizeHeroCanvas()
+      heroPreloadTimer = window.setTimeout(preloadHeroFrames, 850)
+      window.addEventListener('resize', resizeHeroCanvas)
 
       const heroScrub = ScrollTrigger.create({
         trigger: '.hero',
         start: 'top top',
         end: 'bottom top',
         scrub: true,
-        onUpdate: (self) => syncHeroVideo(self.progress),
+        onUpdate: (self) => queueHeroFrame(self.progress),
       })
 
-      const onHeroVideoReady = () => {
-        syncHeroVideo(heroScrub.progress)
-        ScrollTrigger.refresh()
-      }
-      heroVideo?.addEventListener('loadedmetadata', onHeroVideoReady)
-      heroVideo?.addEventListener('loadeddata', onHeroVideoReady)
-      cleanupHeroVideo = () => {
-        heroVideo?.removeEventListener('loadedmetadata', onHeroVideoReady)
-        heroVideo?.removeEventListener('loadeddata', onHeroVideoReady)
+      cleanupHeroSequence = () => {
+        heroSequenceCancelled = true
+        cancelAnimationFrame(heroSequenceRaf)
+        window.clearTimeout(heroPreloadTimer)
+        window.removeEventListener('resize', resizeHeroCanvas)
+        heroScrub.kill()
       }
 
       gsap.to('.hero-media', {
         scale: 1.12,
-        filter: 'saturate(1.18) brightness(0.92)',
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.hero',
+          start: 'top top',
+          end: 'bottom top',
+          scrub: true,
+        },
+      })
+
+      gsap.to(rootRef.current, {
+        '--hero-scroll-darken': 0.78,
         ease: 'none',
         scrollTrigger: {
           trigger: '.hero',
@@ -542,8 +621,8 @@ function App() {
     return () => {
       window.removeEventListener('pointermove', onPointerMove)
       cancelAnimationFrame(rafId)
-      cancelAnimationFrame(heroVideoSeekRaf)
-      cleanupHeroVideo?.()
+      cancelAnimationFrame(heroSequenceRaf)
+      cleanupHeroSequence?.()
       lenis.destroy()
       context.revert()
     }

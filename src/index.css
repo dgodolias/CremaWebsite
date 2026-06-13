@@ -70,6 +70,7 @@ img {
 .site-shell {
   --pointer-x: 0;
   --pointer-y: 0;
+  --hero-scroll-darken: 0;
   position: relative;
   overflow: hidden;
   background:
@@ -419,8 +420,18 @@ body {
   will-change: filter, transform;
 }
 
+.hero-media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: #000;
+  opacity: var(--hero-scroll-darken);
+}
+
 .hero-poster,
-.hero-scroll-video {
+.hero-sequence-canvas {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -431,12 +442,12 @@ body {
   transform: scale(1.025);
 }
 
-.hero-scroll-video {
+.hero-sequence-canvas {
   opacity: 0;
-  transition: opacity 480ms ease;
+  transition: opacity 260ms ease;
 }
 
-.hero-scroll-video.is-ready {
+.hero-media.is-canvas-ready .hero-sequence-canvas {
   opacity: 0.94;
 }
 
