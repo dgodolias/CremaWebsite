@@ -37,8 +37,28 @@ test('language selector opens a custom menu without native browser chrome', asyn
 
   const panel = page.locator('.language-panel')
   await expect(panel).toBeVisible()
-  await expect(panel.locator('.language-option')).toHaveCount(11)
+  await expect(panel.locator('.language-option')).toHaveCount(16)
   await expect(panel.locator('.language-option[data-language="el"]')).toHaveAttribute('aria-selected', 'true')
+
+  await expect(panel.locator('.language-code')).toHaveText([
+    'GR',
+    'EN',
+    'DE',
+    'FR',
+    'IT',
+    'ES',
+    'RU',
+    'ZH',
+    'AR',
+    'TR',
+    'BG',
+    'RO',
+    'UA',
+    'PL',
+    'NL',
+    'PT',
+  ])
+  await expect(panel.locator('.language-panel-status')).toHaveCount(0)
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
   expect(overflow).toBeLessThanOrEqual(2)
@@ -54,6 +74,26 @@ test('language selector lets Google translate the label while preserving languag
 
   await page.locator('.language-trigger').click()
   await expect(page.locator('.language-panel')).toHaveAttribute('translate', 'no')
+  await expect(page.locator('.translation-status')).toHaveCount(0)
+})
+
+test('custom cursor stays lightweight and reacts to desktop interactions', async ({ browserName, page }) => {
+  test.skip(browserName !== 'chromium', 'custom cursor is only enabled for fine desktop pointers')
+
+  await page.goto('/')
+
+  await expect(page.locator('body')).toHaveClass(/has-custom-cursor/)
+  await expect(page.locator('.custom-cursor')).toHaveClass(/is-enabled/)
+  await page.mouse.move(420, 360)
+  await expect(page.locator('.custom-cursor')).toHaveClass(/is-visible/)
+
+  const menuBox = await page.getByRole('link', { name: 'Crema menu' }).first().boundingBox()
+  expect(menuBox).not.toBeNull()
+  await page.mouse.move(menuBox!.x + menuBox!.width / 2, menuBox!.y + menuBox!.height / 2)
+  await expect(page.locator('.custom-cursor')).toHaveClass(/is-interactive/)
+
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
+  expect(overflow).toBeLessThanOrEqual(2)
 })
 
 test('hero canvas sequence scrubs when the desktop page scrolls', async ({ browserName, page }) => {

@@ -1,15 +1,20 @@
 export const supportedLanguages = [
-  { code: 'el', label: 'Ελληνικά' },
-  { code: 'en', label: 'English' },
-  { code: 'fr', label: 'Français' },
-  { code: 'de', label: 'Deutsch' },
-  { code: 'it', label: 'Italiano' },
-  { code: 'es', label: 'Español' },
-  { code: 'tr', label: 'Türkçe' },
-  { code: 'ru', label: 'Русский' },
-  { code: 'ar', label: 'العربية' },
-  { code: 'zh-CN', label: '中文' },
-  { code: 'ja', label: '日本語' },
+  { code: 'el', displayCode: 'GR', label: 'Ελληνικά' },
+  { code: 'en', displayCode: 'EN', label: 'English' },
+  { code: 'de', displayCode: 'DE', label: 'Deutsch' },
+  { code: 'fr', displayCode: 'FR', label: 'Français' },
+  { code: 'it', displayCode: 'IT', label: 'Italiano' },
+  { code: 'es', displayCode: 'ES', label: 'Español' },
+  { code: 'ru', displayCode: 'RU', label: 'Русский' },
+  { code: 'zh-CN', displayCode: 'ZH', label: '中文' },
+  { code: 'ar', displayCode: 'AR', label: 'العربية' },
+  { code: 'tr', displayCode: 'TR', label: 'Türkçe' },
+  { code: 'bg', displayCode: 'BG', label: 'Български' },
+  { code: 'ro', displayCode: 'RO', label: 'Română' },
+  { code: 'uk', displayCode: 'UA', label: 'Українська' },
+  { code: 'pl', displayCode: 'PL', label: 'Polski' },
+  { code: 'nl', displayCode: 'NL', label: 'Nederlands' },
+  { code: 'pt', displayCode: 'PT', label: 'Português' },
 ] as const
 
 export type LanguageCode = (typeof supportedLanguages)[number]['code']
@@ -126,10 +131,6 @@ export const greekContent = {
   },
   language: {
     label: 'Γλώσσα',
-    loading: 'Μετάφραση...',
-    apiMissing: 'Η μετάφραση δεν είναι διαθέσιμη αυτή τη στιγμή.',
-    ready: 'Μετάφραση από Google Translate.',
-    fallback: 'Η μετάφραση δεν είναι διαθέσιμη αυτή τη στιγμή.',
   },
 } as const
 

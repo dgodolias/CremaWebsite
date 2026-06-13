@@ -140,12 +140,6 @@ function LanguageMenu({
   const [isOpen, setIsOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const currentLanguage = supportedLanguages.find((item) => item.code === language) ?? supportedLanguages[0]
-  const statusLabel: Record<TranslationState, string> = {
-    idle: 'Ελληνικό πρωτότυπο',
-    loading: 'Google Translate φορτώνει',
-    ready: 'Google Translate ενεργό',
-    error: 'Μετάφραση μη διαθέσιμη',
-  }
 
   useEffect(() => {
     if (!isOpen) return
@@ -187,7 +181,7 @@ function LanguageMenu({
           <Globe2 size={15} />
           <span>{currentLanguage.label}</span>
         </span>
-        <span className={clsx('language-state-dot', `is-${state}`)} title={statusLabel[state]} />
+        <span className={clsx('language-state-dot', `is-${state}`)} aria-hidden="true" />
         <ChevronDown className={clsx('language-chevron', isOpen && 'is-open')} size={15} />
       </button>
 
@@ -210,17 +204,11 @@ function LanguageMenu({
                 }}
               >
                 <span className="language-name">{item.label}</span>
-                <span className="language-code">{item.code.toUpperCase()}</span>
+                <span className="language-code">{item.displayCode}</span>
                 {isSelected && <Check size={15} aria-hidden="true" />}
               </button>
             )
           })}
-          {state !== 'idle' && (
-            <p className="language-panel-status" role="status">
-              <span className={clsx('language-state-dot', `is-${state}`)} />
-              {statusLabel[state]}
-            </p>
-          )}
         </div>
       )}
     </div>
@@ -308,6 +296,88 @@ function HeroScrollMedia() {
       <img className="hero-poster" src={heroPoster} alt="" />
       <canvas className="hero-sequence-canvas" data-frame="0" />
       <div className="hero-media-shade" />
+    </div>
+  )
+}
+
+function CustomCursor() {
+  const cursorRef = useRef<HTMLDivElement>(null)
+  const dotRef = useRef<HTMLSpanElement>(null)
+  const ringRef = useRef<HTMLSpanElement>(null)
+
+  useEffect(() => {
+    const supportsCursor = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const cursor = cursorRef.current
+    const dot = dotRef.current
+    const ring = ringRef.current
+
+    if (!supportsCursor || reduceMotion || !cursor || !dot || !ring) return
+
+    let rafId = 0
+    let targetX = window.innerWidth / 2
+    let targetY = window.innerHeight / 2
+    let ringX = targetX
+    let ringY = targetY
+
+    document.body.classList.add('has-custom-cursor')
+    cursor.classList.add('is-enabled')
+
+    const paint = () => {
+      ringX += (targetX - ringX) * 0.22
+      ringY += (targetY - ringY) * 0.22
+      dot.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) translate(-50%, -50%)`
+      ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0) translate(-50%, -50%)`
+      rafId = requestAnimationFrame(paint)
+    }
+
+    const setInteractiveState = (target: EventTarget | null) => {
+      const element = target instanceof Element ? target : null
+      const isInteractive = Boolean(
+        element?.closest('a, button, input, textarea, select, iframe, [role="button"], [role="option"]'),
+      )
+      cursor.classList.toggle('is-interactive', isInteractive)
+    }
+
+    const onPointerMove = (event: PointerEvent) => {
+      targetX = event.clientX
+      targetY = event.clientY
+      cursor.classList.add('is-visible')
+      setInteractiveState(event.target)
+    }
+
+    const onPointerLeave = () => {
+      cursor.classList.remove('is-visible')
+    }
+
+    const onPointerDown = () => {
+      cursor.classList.add('is-pressed')
+    }
+
+    const onPointerUp = () => {
+      cursor.classList.remove('is-pressed')
+    }
+
+    rafId = requestAnimationFrame(paint)
+    window.addEventListener('pointermove', onPointerMove, { passive: true })
+    document.addEventListener('pointerleave', onPointerLeave)
+    document.addEventListener('pointerdown', onPointerDown, { passive: true })
+    document.addEventListener('pointerup', onPointerUp, { passive: true })
+
+    return () => {
+      document.body.classList.remove('has-custom-cursor')
+      cancelAnimationFrame(rafId)
+      window.removeEventListener('pointermove', onPointerMove)
+      document.removeEventListener('pointerleave', onPointerLeave)
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('pointerup', onPointerUp)
+    }
+  }, [])
+
+  return (
+    <div className="custom-cursor" ref={cursorRef} aria-hidden="true">
+      <span className="custom-cursor-ring" ref={ringRef} />
+      <span className="custom-cursor-dot" ref={dotRef} />
     </div>
   )
 }
@@ -718,6 +788,7 @@ function App() {
       <div className="scroll-progress" />
       <HeroScrollMedia />
       <GoogleTranslateBridge language={language} onStateChange={setTranslationState} />
+      <CustomCursor />
 
       <header className="topbar">
         <a className="brand-lockup" href="#top" aria-label="Crema Gazi home">
@@ -785,13 +856,6 @@ function App() {
                 <ArrowUpRight size={16} />
               </MagneticLink>
             </div>
-            {language !== 'el' && translationState !== 'idle' && (
-              <p className="translation-status" role="status">
-                {translationState === 'loading' && content.language.loading}
-                {translationState === 'ready' && content.language.ready}
-                {translationState === 'error' && content.language.fallback}
-              </p>
-            )}
           </div>
 
           <div className="delivery-chip hero-delivery-chip" data-float="0.8" aria-hidden="true">
