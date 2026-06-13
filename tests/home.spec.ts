@@ -24,7 +24,7 @@ test('key sections stay reachable on mobile', async ({ page }) => {
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
 
   await expect(page.locator('.site-footer')).toContainText('63')
-  await expect(page.locator('.site-footer')).toContainText('24')
+  await expect(page.locator('.site-footer')).toContainText('delivery')
 })
 
 test('language selector opens a custom menu without native browser chrome', async ({ page }) => {
@@ -42,6 +42,18 @@ test('language selector opens a custom menu without native browser chrome', asyn
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
   expect(overflow).toBeLessThanOrEqual(2)
+})
+
+test('language selector lets Google translate the label while preserving language names', async ({ page }) => {
+  await page.goto('/')
+
+  await expect(page.locator('.language-picker')).not.toHaveAttribute('translate', 'no')
+  await expect(page.locator('.language-kicker')).toHaveText('Γλώσσα')
+  await expect(page.locator('.language-current')).toHaveAttribute('translate', 'no')
+  await expect(page.locator('.language-panel')).toHaveCount(0)
+
+  await page.locator('.language-trigger').click()
+  await expect(page.locator('.language-panel')).toHaveAttribute('translate', 'no')
 })
 
 test('hero canvas sequence scrubs when the desktop page scrolls', async ({ browserName, page }) => {

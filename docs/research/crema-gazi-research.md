@@ -2,11 +2,12 @@
 
 Date: 2026-06-13
 
-## Verified Business Signals
+## Public Business Signals
 
 - Name: Crema Gazi / Crema.
 - Instagram: `https://www.instagram.com/crema_gazi/`
 - Instagram public profile description found in server metadata: `24hr delivery crepes-waffles-coffee-pastry shop. Life is uncertain.Eat dessert first... Persefonis 63 Gazi 210-3467213`.
+- Treat the 24-hour wording as a public-listing claim, not as owner-confirmed copy. The live site should avoid prominent "24ωρο delivery" language unless the owner confirms it.
 - Address used across public listings: Persefonis 63, Gazi, Athens.
 - Phone: 210 346 7213.
 - Ordering/listing sources:
@@ -20,7 +21,7 @@ Date: 2026-06-13
   - dark charcoal background,
   - white handwritten `Crema` wordmark,
   - green coffee/steam mark,
-  - orange `24h Delivery`,
+  - orange delivery/status callout,
   - white phone/address.
 - Working palette:
   - charcoal `#10100e`

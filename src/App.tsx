@@ -27,10 +27,10 @@ const heroSequenceFrame = (frame: number) =>
   `/assets/generated/hero-sequence/frame-${String(frame).padStart(3, '0')}.webp`
 
 const signatureImages = [
+  heroPoster,
   asset('crema-waffle-13.jpg'),
   asset('crema-dessert-18.jpg'),
   asset('crema-crepe-05.jpg'),
-  asset('crema-dessert-22.jpg'),
 ]
 
 const gallery = [
@@ -45,12 +45,12 @@ const gallery = [
 ]
 
 const productImages = [
-  asset('crema-dessert-18.jpg'),
+  heroPoster,
   asset('crema-crepe-05.jpg'),
   asset('crema-waffle-13.jpg'),
-  asset('crema-dessert-23.jpg'),
-  asset('crema-dessert-24.jpg'),
-  asset('crema-dessert-27.jpg'),
+  asset('crema-dessert-18.jpg'),
+  asset('crema-dessert-22.jpg'),
+  asset('crema-cover.jpg'),
 ]
 
 const navTargets = ['story', 'signatures', 'gazi', 'delivery']
@@ -173,7 +173,7 @@ function LanguageMenu({
   }, [isOpen])
 
   return (
-    <div className="language-picker notranslate" translate="no" ref={menuRef}>
+    <div className="language-picker" ref={menuRef}>
       <button
         className="language-trigger"
         type="button"
@@ -183,7 +183,7 @@ function LanguageMenu({
         onClick={() => setIsOpen((value) => !value)}
       >
         <span className="language-kicker">{label}</span>
-        <span className="language-current">
+        <span className="language-current notranslate" translate="no">
           <Globe2 size={15} />
           <span>{currentLanguage.label}</span>
         </span>
@@ -192,7 +192,7 @@ function LanguageMenu({
       </button>
 
       {isOpen && (
-        <div className="language-panel" role="listbox" aria-label={label}>
+        <div className="language-panel notranslate" translate="no" role="listbox" aria-label={label}>
           {supportedLanguages.map((item) => {
             const isSelected = item.code === language
 
@@ -728,7 +728,7 @@ function App() {
           ))}
           <a className="nav-menu-link" href="https://quar.gr/crema" target="_blank" rel="noreferrer" aria-label="Crema menu">
             <BookOpenText size={15} />
-            Menu
+            Μενού
             <ArrowUpRight size={14} />
           </a>
         </nav>
