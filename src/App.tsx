@@ -374,7 +374,6 @@ function App() {
       })
 
       gsap.from('.hero-media', {
-        opacity: 0.72,
         scale: 1.08,
         duration: 1.5,
         ease: 'power3.out',
@@ -425,6 +424,7 @@ function App() {
       let heroPreloadTimer = 0
       let heroPreloadCursor = 1
       let heroSequenceCancelled = false
+      const heroInitialPreloadCount = 12
 
       const paintCoverFrame = (image: HTMLImageElement) => {
         if (!heroCanvas || !heroContext || !image.naturalWidth || !image.naturalHeight) return
@@ -450,6 +450,7 @@ function App() {
         const upperFrame = heroFrames[upperFrameIndex]
 
         if (!lowerFrame?.complete || !lowerFrame.naturalWidth) return
+        if (mix > 0 && (!upperFrame?.complete || !upperFrame.naturalWidth)) return
         if (!force && Math.abs(activeHeroFrame - clampedProgress) < 0.001) return
 
         const rect = heroCanvas.getBoundingClientRect()
@@ -474,7 +475,7 @@ function App() {
 
         const image = new Image()
         image.decoding = 'async'
-        ;(image as HTMLImageElement & { fetchPriority?: string }).fetchPriority = frameIndex < 10 ? 'high' : 'low'
+        ;(image as HTMLImageElement & { fetchPriority?: string }).fetchPriority = frameIndex < heroInitialPreloadCount ? 'high' : 'low'
         image.src = heroSequenceFrame(frameIndex + 1)
         image.onload = () => {
           if (heroSequenceCancelled) return
@@ -540,9 +541,12 @@ function App() {
         }
       }
 
-      loadHeroFrame(0)
+      for (let frameIndex = 0; frameIndex < heroInitialPreloadCount; frameIndex += 1) {
+        loadHeroFrame(frameIndex)
+      }
+      heroPreloadCursor = heroInitialPreloadCount
       resizeHeroCanvas()
-      heroPreloadTimer = window.setTimeout(preloadHeroFrames, 850)
+      heroPreloadTimer = window.setTimeout(preloadHeroFrames, 240)
       window.addEventListener('resize', resizeHeroCanvas)
 
       const sequenceFrameForRange = (progress: number, startFrame: number, endFrame: number) =>

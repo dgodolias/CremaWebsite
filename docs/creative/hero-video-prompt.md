@@ -42,6 +42,8 @@ ffmpeg -y -i public/assets/generated/crema-hero-scroll.mp4 -vf "fps=12,scale=144
 ```
 
 - Keep the poster image visible until the canvas has drawn the first decoded frame.
+- After the first canvas frame is decoded, swap to the canvas without opacity transitions and hide the poster to avoid reload/first-scroll flicker.
+- Preload the first 12 frames immediately and only draw interpolated frames when both adjacent frames are decoded.
 - The canvas preloads nearby frames first, then progressively warms the rest of the sequence in small batches.
 - The canvas renderer crossfades between adjacent decoded frames using decimal scroll progress. This keeps scroll motion smoother without increasing the current 120-frame payload.
 - The same fixed canvas layer now continues through the dark sections instead of creating new media elements:

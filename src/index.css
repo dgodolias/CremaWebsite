@@ -470,11 +470,14 @@ body {
 
 .hero-sequence-canvas {
   opacity: 0;
-  transition: opacity 260ms ease;
 }
 
 .hero-media.is-canvas-ready .hero-sequence-canvas {
   opacity: var(--sequence-canvas-opacity);
+}
+
+.hero-media.is-canvas-ready .hero-poster {
+  opacity: 0;
 }
 
 .hero-media-shade {
