@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test('homepage renders the Crema experience without layout overflow', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('./')
 
   await expect(page.locator('h1')).toContainText('Crema')
   await expect(page.locator('#google_translate_element')).toHaveCount(1)
@@ -18,7 +18,7 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
 })
 
 test('key sections stay reachable on mobile', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('./')
 
   await expect(page.locator('.topbar .icon-action[href^="tel:"]')).toBeVisible()
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
@@ -28,7 +28,7 @@ test('key sections stay reachable on mobile', async ({ page }) => {
 })
 
 test('language selector opens a custom menu without native browser chrome', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('./')
 
   await expect(page.locator('.language-picker select')).toHaveCount(0)
 
@@ -65,7 +65,7 @@ test('language selector opens a custom menu without native browser chrome', asyn
 })
 
 test('language selector lets Google translate the label while preserving language names', async ({ page }) => {
-  await page.goto('/')
+  await page.goto('./')
 
   await expect(page.locator('.language-picker')).not.toHaveAttribute('translate', 'no')
   await expect(page.locator('.language-kicker')).toHaveText('Γλώσσα')
@@ -80,7 +80,7 @@ test('language selector lets Google translate the label while preserving languag
 test('custom cursor stays lightweight and reacts to desktop interactions', async ({ browserName, page }) => {
   test.skip(browserName !== 'chromium', 'custom cursor is only enabled for fine desktop pointers')
 
-  await page.goto('/')
+  await page.goto('./')
 
   await expect(page.locator('body')).toHaveClass(/has-custom-cursor/)
   await expect(page.locator('.custom-cursor')).toHaveClass(/is-enabled/)
@@ -99,7 +99,7 @@ test('custom cursor stays lightweight and reacts to desktop interactions', async
 test('hero canvas sequence scrubs when the desktop page scrolls', async ({ browserName, page }) => {
   test.skip(browserName !== 'chromium', 'desktop Chromium gives the most stable canvas signal')
 
-  await page.goto('/')
+  await page.goto('./')
   await page.waitForFunction(() => {
     const canvas = document.querySelector<HTMLCanvasElement>('.hero-sequence-canvas')
     return canvas && canvas.dataset.frame === '0' && canvas.width > 0 && canvas.height > 0
