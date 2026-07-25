@@ -1,0 +1,13 @@
+.signal-route-loading {
+  display: grid;
+  min-width: 320px;
+  min-height: 100svh;
+  place-items: center;
+  color: #f4efe5;
+  background:
+    radial-gradient(circle at 68% 24%, rgba(255, 90, 24, 0.2), transparent 28%),
+    #100c0a;
+  font: 700 0.72rem/1.4 system-ui, sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}

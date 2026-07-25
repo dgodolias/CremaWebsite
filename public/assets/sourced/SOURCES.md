@@ -13,3 +13,10 @@ Generated assets live in `public/assets/generated/`.
 - `crema-logo-transparent.png`: AI-generated clean Crema-inspired logo produced with the built-in image generator, then chroma-key background removed locally.
 - `crema-logo-transparent-512.png`: resized web version used in the header.
 - `crema-logo-trimmed.png`: transparent logo cropped to visible content for header/story placement.
+- `crema-signal-master-v2.png`: original no-reference food still generated for the `/signal` route.
+- `signal-sequence-v4/frame-*.webp`: deterministic 120-frame zoom/pan sequence derived from `crema-signal-master-v2.png`.
+
+The `/signal` route uses the new generated sequence instead of the rights-pending
+Wolt/SE MENY candidates. Full prompt, processing command, component provenance,
+and runtime-license boundaries are recorded in
+`docs/research/signal-asset-provenance.md`.

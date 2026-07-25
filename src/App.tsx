@@ -17,6 +17,7 @@ import {
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
+import './index.css'
 import clsx from 'clsx'
 import { greekContent, supportedLanguages, type LanguageCode } from './content'
 
