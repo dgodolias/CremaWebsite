@@ -7,20 +7,24 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "lottie:signal": "node scripts/lottiefiles/run-crema-signal.mjs",
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "@lottiefiles/dotlottie-react": "^0.19.12",
     "clsx": "^2.1.1",
     "gsap": "^3.15.0",
     "lenis": "^1.3.23",
     "lucide-react": "^1.18.0",
+    "motion": "^12.42.2",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@playwright/test": "^1.60.0",
     "@tailwindcss/vite": "^4.3.1",
     "@types/node": "^25.9.3",
