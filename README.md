@@ -6,8 +6,8 @@ Premium React/TypeScript/Tailwind website for Crema Gazi, a 24hr delivery coffee
 
 - React + TypeScript + Vite
 - Tailwind CSS v4
-- GSAP + ScrollTrigger
-- Lenis smooth scrolling
+- Native passive scroll pipeline + Intersection Observer reveals
+- Bounded canvas hero-sequence loader
 - Playwright visual/behavior checks
 
 ## Commands

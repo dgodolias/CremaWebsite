@@ -17,6 +17,22 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
   expect(overflow).toBeLessThanOrEqual(2)
 })
 
+test('hero media avoids eager frame loading while the page is idle', async ({ isMobile, page }) => {
+  await page.route(/translate\.google\.com|google\.com\/maps\/embed/, (route) => route.abort())
+  await page.goto('./')
+  await page.waitForTimeout(1_200)
+
+  const performanceState = await page.evaluate(() => ({
+    frameRequests: performance
+      .getEntriesByType('resource')
+      .filter((entry) => entry.name.includes('/hero-sequence/')).length,
+    translateScriptPresent: Boolean(document.getElementById('google-translate-widget-script')),
+  }))
+
+  expect(performanceState.frameRequests).toBeLessThanOrEqual(isMobile ? 0 : 6)
+  expect(performanceState.translateScriptPresent).toBe(false)
+})
+
 test('key sections stay reachable on mobile', async ({ page }) => {
   await page.goto('./')
 

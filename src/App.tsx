@@ -14,9 +14,6 @@ import {
   ShoppingBag,
   Star,
 } from 'lucide-react'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import Lenis from 'lenis'
 import clsx from 'clsx'
 import { greekContent, supportedLanguages, type LanguageCode } from './content'
 
@@ -27,7 +24,7 @@ const heroPoster = asset('crema-scroll-cover.avif')
 const heroSequenceFrameCount = 120
 const heroSequenceFrame = (frame: number) =>
   generatedAsset(`hero-sequence/frame-${String(frame).padStart(3, '0')}.webp`)
-const brandLogo = generatedAsset('crema-logo-trimmed.png')
+const brandLogo = generatedAsset('crema-logo-trimmed-512.png')
 
 const signatureImages = [
   heroPoster,
@@ -239,12 +236,14 @@ function GoogleTranslateBridge({
   onStateChange: (state: TranslationState) => void
 }) {
   useEffect(() => {
+    if (language === 'el') return
+
     const initWidget = () => {
       const host = document.getElementById('google_translate_element')
       const TranslateElement = window.google?.translate?.TranslateElement
       if (!host || !TranslateElement) return
       if (host.dataset.ready === 'true') {
-        onStateChange(language === 'el' ? 'idle' : 'ready')
+        onStateChange('ready')
         return
       }
 
@@ -259,7 +258,7 @@ function GoogleTranslateBridge({
           'google_translate_element',
         )
         host.dataset.ready = 'true'
-        onStateChange(language === 'el' ? 'idle' : 'ready')
+        onStateChange('ready')
       } catch {
         onStateChange('error')
       }
@@ -277,11 +276,7 @@ function GoogleTranslateBridge({
       script.id = GOOGLE_TRANSLATE_SCRIPT_ID
       script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'
       script.async = true
-      script.onerror = () => {
-        if (language !== 'el') {
-          onStateChange('error')
-        }
-      }
+      script.onerror = () => onStateChange('error')
       document.head.appendChild(script)
     }
   }, [language, onStateChange])
@@ -296,7 +291,7 @@ function GoogleTranslateBridge({
 function HeroScrollMedia() {
   return (
     <div className="hero-media" aria-hidden="true">
-      <img className="hero-poster" src={heroPoster} alt="" />
+      <img className="hero-poster" src={heroPoster} alt="" decoding="async" fetchPriority="high" />
       <canvas className="hero-sequence-canvas" data-frame="0" />
       <div className="hero-media-shade" />
     </div>
@@ -322,6 +317,7 @@ function CustomCursor() {
     let targetY = window.innerHeight / 2
     let ringX = targetX
     let ringY = targetY
+    let isInteractive = false
 
     document.body.classList.add('has-custom-cursor')
     cursor.classList.add('is-enabled')
@@ -331,14 +327,25 @@ function CustomCursor() {
       ringY += (targetY - ringY) * 0.22
       dot.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) translate(-50%, -50%)`
       ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0) translate(-50%, -50%)`
-      rafId = requestAnimationFrame(paint)
+
+      if (Math.abs(targetX - ringX) > 0.1 || Math.abs(targetY - ringY) > 0.1) {
+        rafId = requestAnimationFrame(paint)
+      } else {
+        rafId = 0
+      }
+    }
+
+    const schedulePaint = () => {
+      if (!rafId) rafId = requestAnimationFrame(paint)
     }
 
     const setInteractiveState = (target: EventTarget | null) => {
       const element = target instanceof Element ? target : null
-      const isInteractive = Boolean(
+      const nextIsInteractive = Boolean(
         element?.closest('a, button, input, textarea, select, iframe, [role="button"], [role="option"]'),
       )
+      if (nextIsInteractive === isInteractive) return
+      isInteractive = nextIsInteractive
       cursor.classList.toggle('is-interactive', isInteractive)
     }
 
@@ -347,6 +354,7 @@ function CustomCursor() {
       targetY = event.clientY
       cursor.classList.add('is-visible')
       setInteractiveState(event.target)
+      schedulePaint()
     }
 
     const onPointerLeave = () => {
@@ -361,7 +369,6 @@ function CustomCursor() {
       cursor.classList.remove('is-pressed')
     }
 
-    rafId = requestAnimationFrame(paint)
     window.addEventListener('pointermove', onPointerMove, { passive: true })
     document.addEventListener('pointerleave', onPointerLeave)
     document.addEventListener('pointerdown', onPointerDown, { passive: true })
@@ -409,380 +416,333 @@ function App() {
 
   useEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduceMotion || !rootRef.current) return
+    const root = rootRef.current
+    if (!root) return
 
-    gsap.registerPlugin(ScrollTrigger)
+    const revealTargets = Array.from(root.querySelectorAll<HTMLElement>('.image-reveal, .section-copy'))
 
-    const lenis = new Lenis({
-      lerp: 0.08,
-      wheelMultiplier: 0.8,
-      touchMultiplier: 1.1,
-    })
-    lenis.on('scroll', ScrollTrigger.update)
-
-    let rafId = 0
-    const raf = (time: number) => {
-      lenis.raf(time)
-      rafId = requestAnimationFrame(raf)
+    if (reduceMotion) {
+      root.classList.add('is-ready')
+      revealTargets.forEach((element) => element.classList.add('is-revealed'))
+      return
     }
-    rafId = requestAnimationFrame(raf)
 
-    let cleanupHeroSequence: (() => void) | undefined
-    let heroSequenceRaf = 0
+    root.classList.add('has-motion')
+    const readyRaf = requestAnimationFrame(() => root.classList.add('is-ready'))
 
-    const context = gsap.context(() => {
-      gsap.set('.reveal-line', { yPercent: 112, rotate: 2 })
-      gsap.set('.story-section', { opacity: 0, y: 64 })
-      gsap.set(rootRef.current, {
-        '--hero-scroll-darken': 0,
-        '--sequence-canvas-opacity': 0.94,
-        '--sequence-shade-opacity': 1,
-        '--sequence-image-scale': 1.045,
-      })
-      gsap.to('.reveal-line', {
-        yPercent: 0,
-        rotate: 0,
-        duration: 1.25,
-        stagger: 0.1,
-        ease: 'power4.out',
-      })
-
-      gsap.from(rootRef.current, {
-        '--sequence-image-scale': 1.075,
-        duration: 1.5,
-        ease: 'power3.out',
-      })
-
-      gsap.from('.hero-delivery-chip', {
-        y: 34,
-        opacity: 0,
-        scale: 0.9,
-        duration: 1,
-        ease: 'power3.out',
-        delay: 0.35,
-      })
-
-      gsap.to('.scroll-progress', {
-        scaleX: 1,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: document.documentElement,
-          start: 'top top',
-          end: 'bottom bottom',
-          scrub: 0.2,
-        },
-      })
-
-      gsap.utils.toArray<HTMLElement>('[data-float]').forEach((el) => {
-        const depth = Number(el.dataset.float ?? 1)
-        gsap.to(el, {
-          y: -80 * depth,
-          rotate: depth * 2,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: '.hero',
-            start: 'top top',
-            end: 'bottom top',
-            scrub: true,
-          },
+    const revealObserver = new IntersectionObserver(
+      (entries, observer) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return
+          entry.target.classList.add('is-revealed')
+          observer.unobserve(entry.target)
         })
-      })
+      },
+      { rootMargin: '0px 0px -12% 0px', threshold: 0.06 },
+    )
+    revealTargets.forEach((element) => revealObserver.observe(element))
 
-      const heroCanvas = document.querySelector<HTMLCanvasElement>('.hero-sequence-canvas')
-      const heroMedia = document.querySelector<HTMLElement>('.hero-media')
-      const heroContext = heroCanvas?.getContext('2d', { alpha: false })
-      const heroFrames: Array<HTMLImageElement | undefined> = []
-      let activeHeroFrame = -1
-      let targetHeroFrame = 0
-      let targetHeroFrameProgress = 0
-      let heroPreloadTimer = 0
-      let heroPreloadCursor = 1
-      let heroSequenceCancelled = false
-      const heroInitialPreloadCount = 12
+    const useStaticHero = window.matchMedia('(hover: none), (pointer: coarse)').matches
+    if (useStaticHero) {
+      return () => {
+        revealObserver.disconnect()
+        cancelAnimationFrame(readyRaf)
+        root.classList.remove('has-motion', 'is-ready')
+      }
+    }
 
-      const getHeroCanvasSize = () => ({
-        width: Math.max(1, heroMedia?.clientWidth || heroCanvas?.offsetWidth || window.innerWidth),
-        height: Math.max(1, heroMedia?.clientHeight || heroCanvas?.offsetHeight || window.innerHeight),
-      })
+    const heroCanvas = root.querySelector<HTMLCanvasElement>('.hero-sequence-canvas')
+    const heroMedia = root.querySelector<HTMLElement>('.hero-media')
+    const hero = root.querySelector<HTMLElement>('.hero')
+    const signatureSection = root.querySelector<HTMLElement>('.signature-section')
+    const deliverySection = root.querySelector<HTMLElement>('.delivery-section')
+    const heroCopy = root.querySelector<HTMLElement>('.hero-copy')
+    const heroChip = root.querySelector<HTMLElement>('.hero-delivery-chip')
+    const scrollProgress = root.querySelector<HTMLElement>('.scroll-progress')
+    const heroContext = heroCanvas?.getContext('2d', { alpha: false, desynchronized: true })
 
-      const paintCoverFrame = (image: HTMLImageElement) => {
-        if (!heroCanvas || !heroContext || !image.naturalWidth || !image.naturalHeight) return
+    const loadedFrames = new Map<number, HTMLImageElement>()
+    const loadingFrames = new Map<number, HTMLImageElement>()
+    const queuedFrames = new Set<number>()
+    let frameQueue: number[] = []
+    let activeHeroFrame = -1
+    let targetHeroFrame = 0
+    let previousTargetHeroFrame = 0
+    let canvasWidth = Math.max(1, window.innerWidth)
+    let canvasHeight = Math.max(1, window.innerHeight)
+    let scrollRaf = 0
+    let resizeRaf = 0
+    let isCancelled = false
+    const frameCacheSize = 18
+    const maxConcurrentFrameLoads = 3
 
-        const canvasSize = getHeroCanvasSize()
-        const scale = Math.max(canvasSize.width / image.naturalWidth, canvasSize.height / image.naturalHeight)
-        const width = image.naturalWidth * scale
-        const height = image.naturalHeight * scale
-        const x = (canvasSize.width - width) / 2
-        const y = (canvasSize.height - height) / 2
+    const clamp = (value: number, min = 0, max = 1) => Math.min(max, Math.max(min, value))
+    const elementTop = (element: HTMLElement) => element.getBoundingClientRect().top + window.scrollY
+    const regions = {
+      heroTop: 0,
+      heroEnd: 1,
+      signatureStart: 1,
+      signatureEnd: 2,
+      deliveryStart: 2,
+      deliveryEnd: 3,
+    }
 
-        heroContext.drawImage(image, x, y, width, height)
+    const drawHeroFrame = (requestedFrame = targetHeroFrame, force = false) => {
+      if (!heroCanvas || !heroContext || !heroMedia || loadedFrames.size === 0) return
+
+      let selectedFrame = loadedFrames.get(requestedFrame)
+      let selectedIndex = requestedFrame
+
+      if (!selectedFrame) {
+        let shortestDistance = Number.POSITIVE_INFINITY
+        loadedFrames.forEach((image, frameIndex) => {
+          const distance = Math.abs(frameIndex - requestedFrame)
+          if (distance < shortestDistance) {
+            shortestDistance = distance
+            selectedFrame = image
+            selectedIndex = frameIndex
+          }
+        })
       }
 
-      const drawHeroFrame = (frameProgress: number, force = false) => {
-        if (!heroCanvas || !heroContext || !heroMedia) return
+      if (!selectedFrame?.naturalWidth || (!force && selectedIndex === activeHeroFrame)) return
 
-        const clampedProgress = Math.min(heroSequenceFrameCount - 1, Math.max(0, frameProgress))
-        const lowerFrameIndex = Math.floor(clampedProgress)
-        const upperFrameIndex = Math.min(heroSequenceFrameCount - 1, lowerFrameIndex + 1)
-        const mix = clampedProgress - lowerFrameIndex
-        const lowerFrame = heroFrames[lowerFrameIndex]
-        const upperFrame = heroFrames[upperFrameIndex]
+      const scale = Math.max(canvasWidth / selectedFrame.naturalWidth, canvasHeight / selectedFrame.naturalHeight)
+      const width = selectedFrame.naturalWidth * scale
+      const height = selectedFrame.naturalHeight * scale
 
-        if (!lowerFrame?.complete || !lowerFrame.naturalWidth) return
-        if (mix > 0 && (!upperFrame?.complete || !upperFrame.naturalWidth)) return
-        if (!force && Math.abs(activeHeroFrame - clampedProgress) < 0.001) return
+      heroContext.globalAlpha = 1
+      heroContext.drawImage(selectedFrame, (canvasWidth - width) / 2, (canvasHeight - height) / 2, width, height)
+      activeHeroFrame = selectedIndex
+      heroCanvas.dataset.frame = String(selectedIndex)
+      heroCanvas.dataset.frameProgress = String(requestedFrame)
+      heroMedia.classList.add('is-canvas-ready')
+    }
 
-        const canvasSize = getHeroCanvasSize()
-        heroContext.globalAlpha = 1
-        heroContext.clearRect(0, 0, canvasSize.width, canvasSize.height)
-        paintCoverFrame(lowerFrame)
+    const trimFrameCache = () => {
+      if (loadedFrames.size <= frameCacheSize) return
 
-        if (mix > 0 && upperFrame?.complete && upperFrame.naturalWidth) {
-          heroContext.globalAlpha = mix
-          paintCoverFrame(upperFrame)
-          heroContext.globalAlpha = 1
-        }
+      const removableFrames = [...loadedFrames.keys()]
+        .filter((frameIndex) => frameIndex !== activeHeroFrame)
+        .toSorted((a, b) => Math.abs(b - targetHeroFrame) - Math.abs(a - targetHeroFrame))
 
-        activeHeroFrame = clampedProgress
-        heroCanvas.dataset.frame = String(Math.round(clampedProgress))
-        heroCanvas.dataset.frameProgress = clampedProgress.toFixed(3)
-        heroMedia.classList.add('is-canvas-ready')
+      while (loadedFrames.size > frameCacheSize && removableFrames.length) {
+        const frameIndex = removableFrames.shift()
+        if (frameIndex === undefined) break
+        const image = loadedFrames.get(frameIndex)
+        loadedFrames.delete(frameIndex)
+        if (image) image.src = ''
       }
+    }
 
-      const loadHeroFrame = (frameIndex: number) => {
-        if (heroFrames[frameIndex]) return heroFrames[frameIndex]
+    const pumpFrameQueue = () => {
+      while (!isCancelled && loadingFrames.size < maxConcurrentFrameLoads && frameQueue.length) {
+        const frameIndex = frameQueue.shift()
+        if (frameIndex === undefined) break
+        queuedFrames.delete(frameIndex)
+        if (loadedFrames.has(frameIndex) || loadingFrames.has(frameIndex)) continue
 
         const image = new Image()
         image.decoding = 'async'
-        ;(image as HTMLImageElement & { fetchPriority?: string }).fetchPriority = frameIndex < heroInitialPreloadCount ? 'high' : 'low'
-        image.src = heroSequenceFrame(frameIndex + 1)
-        image.onload = () => {
-          if (heroSequenceCancelled) return
-          if (
-            frameIndex === Math.floor(targetHeroFrameProgress) ||
-            frameIndex === Math.ceil(targetHeroFrameProgress) ||
-            activeHeroFrame === -1
-          ) {
-            drawHeroFrame(activeHeroFrame === -1 ? frameIndex : targetHeroFrameProgress, true)
-          }
-        }
-        heroFrames[frameIndex] = image
-        return image
-      }
+        image.fetchPriority = Math.abs(frameIndex - targetHeroFrame) <= 1 ? 'high' : 'low'
+        loadingFrames.set(frameIndex, image)
 
-      const resizeHeroCanvas = () => {
-        if (!heroCanvas || !heroContext) return
-
-        const canvasSize = getHeroCanvasSize()
-        const dpr = Math.min(window.devicePixelRatio || 1, 2)
-        const width = Math.max(1, Math.round(canvasSize.width * dpr))
-        const height = Math.max(1, Math.round(canvasSize.height * dpr))
-
-        if (heroCanvas.width !== width || heroCanvas.height !== height) {
-          heroCanvas.width = width
-          heroCanvas.height = height
-        }
-
-        heroContext.setTransform(dpr, 0, 0, dpr, 0, 0)
-        drawHeroFrame(activeHeroFrame >= 0 ? activeHeroFrame : 0, true)
-      }
-
-      const queueHeroFrame = (progress: number) => {
-        targetHeroFrameProgress = Math.min(heroSequenceFrameCount - 1, Math.max(0, progress * (heroSequenceFrameCount - 1)))
-        targetHeroFrame = Math.round(targetHeroFrameProgress)
-
-        if (!heroSequenceRaf) {
-          heroSequenceRaf = requestAnimationFrame(() => {
-            heroSequenceRaf = 0
-            loadHeroFrame(Math.floor(targetHeroFrameProgress))
-            loadHeroFrame(Math.ceil(targetHeroFrameProgress))
-            drawHeroFrame(targetHeroFrameProgress)
-
-            for (let offset = 1; offset <= 5; offset += 1) {
-              if (targetHeroFrame + offset < heroSequenceFrameCount) loadHeroFrame(targetHeroFrame + offset)
-              if (targetHeroFrame - offset >= 0) loadHeroFrame(targetHeroFrame - offset)
+        let settled = false
+        const finish = () => {
+          if (settled) return
+          settled = true
+          loadingFrames.delete(frameIndex)
+          if (!isCancelled && image.naturalWidth) {
+            loadedFrames.set(frameIndex, image)
+            trimFrameCache()
+            if (activeHeroFrame === -1 || Math.abs(frameIndex - targetHeroFrame) <= 1) {
+              drawHeroFrame(targetHeroFrame, true)
             }
-          })
-        }
-      }
-
-      const preloadHeroFrames = () => {
-        if (heroSequenceCancelled) return
-
-        const batchSize = heroPreloadCursor < 18 ? 2 : 1
-        for (let count = 0; count < batchSize && heroPreloadCursor < heroSequenceFrameCount; count += 1) {
-          loadHeroFrame(heroPreloadCursor)
-          heroPreloadCursor += 1
+          }
+          pumpFrameQueue()
         }
 
-        if (heroPreloadCursor < heroSequenceFrameCount) {
-          heroPreloadTimer = window.setTimeout(preloadHeroFrames, heroPreloadCursor < 18 ? 120 : 190)
-        }
+        image.onerror = finish
+        image.src = heroSequenceFrame(frameIndex + 1)
+        image.decode().catch(() => undefined).then(finish)
       }
-
-      for (let frameIndex = 0; frameIndex < heroInitialPreloadCount; frameIndex += 1) {
-        loadHeroFrame(frameIndex)
-      }
-      heroPreloadCursor = heroInitialPreloadCount
-      resizeHeroCanvas()
-      heroPreloadTimer = window.setTimeout(preloadHeroFrames, 240)
-      window.addEventListener('resize', resizeHeroCanvas)
-
-      const sequenceFrameForRange = (progress: number, startFrame: number, endFrame: number) =>
-        startFrame + Math.min(1, Math.max(0, progress)) * (endFrame - startFrame)
-
-      const revealThenFadeDarken = (progress: number) => {
-        const clamped = Math.min(1, Math.max(0, progress))
-        if (clamped < 0.42) return 0.92 - (clamped / 0.42) * 0.56
-        if (clamped > 0.82) return 0.36 + ((clamped - 0.82) / 0.18) * 0.48
-        return 0.36
-      }
-
-      const sequenceTriggers = [
-        ScrollTrigger.create({
-          trigger: '.hero',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: true,
-          onUpdate: (self) => {
-            queueHeroFrame(sequenceFrameForRange(self.progress, 0, 45) / (heroSequenceFrameCount - 1))
-            gsap.set(rootRef.current, {
-              '--hero-scroll-darken': self.progress * 0.8,
-              '--sequence-canvas-opacity': 0.94,
-              '--sequence-shade-opacity': 1,
-              '--sequence-image-scale': 1.045 + self.progress * 0.035,
-            })
-          },
-        }),
-        ScrollTrigger.create({
-          trigger: '.signature-section',
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: true,
-          onUpdate: (self) => {
-            queueHeroFrame(sequenceFrameForRange(self.progress, 45, 84) / (heroSequenceFrameCount - 1))
-            gsap.set(rootRef.current, {
-              '--hero-scroll-darken': revealThenFadeDarken(self.progress),
-              '--sequence-canvas-opacity': 0.9,
-              '--sequence-shade-opacity': 0.82,
-              '--sequence-image-scale': 1.08,
-            })
-          },
-        }),
-        ScrollTrigger.create({
-          trigger: '.delivery-section',
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: true,
-          onUpdate: (self) => {
-            queueHeroFrame(sequenceFrameForRange(self.progress, 84, heroSequenceFrameCount - 1) / (heroSequenceFrameCount - 1))
-            gsap.set(rootRef.current, {
-              '--hero-scroll-darken': revealThenFadeDarken(self.progress),
-              '--sequence-canvas-opacity': 0.88,
-              '--sequence-shade-opacity': 0.74,
-              '--sequence-image-scale': 1.08,
-            })
-          },
-        }),
-      ]
-
-      const resetSequenceTrigger = ScrollTrigger.create({
-        trigger: '.hero',
-        start: 'top top',
-        end: 'bottom top',
-        scrub: true,
-        onLeaveBack: () => {
-          queueHeroFrame(0)
-          gsap.set(rootRef.current, {
-            '--hero-scroll-darken': 0,
-            '--sequence-canvas-opacity': 0.94,
-            '--sequence-shade-opacity': 1,
-            '--sequence-image-scale': 1.045,
-          })
-        },
-      })
-
-      cleanupHeroSequence = () => {
-        heroSequenceCancelled = true
-        cancelAnimationFrame(heroSequenceRaf)
-        window.clearTimeout(heroPreloadTimer)
-        window.removeEventListener('resize', resizeHeroCanvas)
-        sequenceTriggers.forEach((trigger) => trigger.kill())
-        resetSequenceTrigger.kill()
-      }
-
-      gsap.to('.hero-copy', {
-        y: -36,
-        opacity: 0.36,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.hero',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: true,
-        },
-      })
-
-      gsap.to('.story-section', {
-        opacity: 1,
-        y: 0,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.story-section',
-          start: 'top 92%',
-          end: 'top 68%',
-          scrub: true,
-        },
-      })
-
-      gsap.utils.toArray<HTMLElement>('.image-reveal').forEach((el) => {
-        gsap.fromTo(
-          el,
-          { clipPath: 'inset(16% 12% 16% 12%)', scale: 1.08 },
-          {
-            clipPath: 'inset(0% 0% 0% 0%)',
-            scale: 1,
-            duration: 1.2,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: el,
-              start: 'top 82%',
-            },
-          },
-        )
-      })
-
-      gsap.utils.toArray<HTMLElement>('.section-copy').forEach((el) => {
-        gsap.from(el, {
-          y: 42,
-          opacity: 0,
-          duration: 0.9,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 78%',
-          },
-        })
-      })
-
-    }, rootRef)
-
-    const onPointerMove = (event: PointerEvent) => {
-      const x = event.clientX / window.innerWidth - 0.5
-      const y = event.clientY / window.innerHeight - 0.5
-      rootRef.current?.style.setProperty('--pointer-x', x.toFixed(3))
-      rootRef.current?.style.setProperty('--pointer-y', y.toFixed(3))
     }
 
-    window.addEventListener('pointermove', onPointerMove)
+    const requestHeroFrame = (frameIndex: number, urgent = false) => {
+      if (frameIndex < 0 || frameIndex >= heroSequenceFrameCount || loadedFrames.has(frameIndex) || loadingFrames.has(frameIndex)) {
+        return
+      }
+
+      if (queuedFrames.has(frameIndex)) {
+        if (urgent) {
+          frameQueue = frameQueue.filter((queuedFrame) => queuedFrame !== frameIndex)
+          frameQueue.unshift(frameIndex)
+        }
+      } else {
+        queuedFrames.add(frameIndex)
+        if (urgent) frameQueue.unshift(frameIndex)
+        else frameQueue.push(frameIndex)
+      }
+      pumpFrameQueue()
+    }
+
+    const queueHeroFrame = (frameProgress: number) => {
+      previousTargetHeroFrame = targetHeroFrame
+      targetHeroFrame = Math.round(clamp(frameProgress, 0, heroSequenceFrameCount - 1))
+      const direction = targetHeroFrame >= previousTargetHeroFrame ? 1 : -1
+
+      frameQueue = frameQueue.filter((frameIndex) => {
+        const keep = Math.abs(frameIndex - targetHeroFrame) <= 6
+        if (!keep) queuedFrames.delete(frameIndex)
+        return keep
+      })
+
+      requestHeroFrame(targetHeroFrame, true)
+      requestHeroFrame(targetHeroFrame + direction, true)
+      requestHeroFrame(targetHeroFrame - direction)
+      requestHeroFrame(targetHeroFrame + direction * 2)
+      requestHeroFrame(targetHeroFrame + direction * 3)
+      drawHeroFrame(targetHeroFrame)
+    }
+
+    const resizeHeroCanvas = () => {
+      if (!heroCanvas || !heroContext) return
+
+      canvasWidth = Math.max(1, heroMedia?.clientWidth || window.innerWidth)
+      canvasHeight = Math.max(1, heroMedia?.clientHeight || window.innerHeight)
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25)
+      const width = Math.max(1, Math.round(canvasWidth * dpr))
+      const height = Math.max(1, Math.round(canvasHeight * dpr))
+
+      if (heroCanvas.width !== width || heroCanvas.height !== height) {
+        heroCanvas.width = width
+        heroCanvas.height = height
+      }
+
+      heroContext.setTransform(dpr, 0, 0, dpr, 0, 0)
+      heroContext.imageSmoothingEnabled = true
+      heroContext.imageSmoothingQuality = 'medium'
+      drawHeroFrame(targetHeroFrame, true)
+    }
+
+    const refreshRegions = () => {
+      if (!hero || !signatureSection || !deliverySection) return
+      regions.heroTop = elementTop(hero)
+      regions.heroEnd = regions.heroTop + hero.offsetHeight
+      regions.signatureStart = elementTop(signatureSection) - window.innerHeight
+      regions.signatureEnd = elementTop(signatureSection) + signatureSection.offsetHeight
+      regions.deliveryStart = elementTop(deliverySection) - window.innerHeight
+      regions.deliveryEnd = elementTop(deliverySection) + deliverySection.offsetHeight
+    }
+
+    const revealThenFadeDarken = (progress: number) => {
+      const value = clamp(progress)
+      if (value < 0.42) return 0.92 - (value / 0.42) * 0.56
+      if (value > 0.82) return 0.36 + ((value - 0.82) / 0.18) * 0.48
+      return 0.36
+    }
+
+    const updateScroll = () => {
+      scrollRaf = 0
+      const scrollY = window.scrollY
+      const scrollRange = Math.max(1, document.documentElement.scrollHeight - window.innerHeight)
+      const heroProgress = clamp((scrollY - regions.heroTop) / Math.max(1, regions.heroEnd - regions.heroTop))
+
+      if (scrollProgress) scrollProgress.style.transform = `scaleX(${(scrollY / scrollRange).toFixed(4)})`
+      if (heroCopy) {
+        heroCopy.style.transform = `translate3d(0, ${(-36 * heroProgress).toFixed(2)}px, 0)`
+        heroCopy.style.opacity = String(1 - heroProgress * 0.64)
+      }
+      if (heroChip) {
+        heroChip.style.transform = `translate3d(0, ${(-64 * heroProgress).toFixed(2)}px, 0) rotate(${(1.6 * heroProgress).toFixed(2)}deg)`
+      }
+
+      let frameProgress = 45
+      let darken = 0.8
+      let canvasOpacity = 0.94
+      let shadeOpacity = 1
+      let imageScale = 1.045 + heroProgress * 0.035
+
+      if (scrollY <= regions.heroEnd) {
+        frameProgress = heroProgress * 45
+        darken = heroProgress * 0.8
+      } else if (scrollY >= regions.signatureStart && scrollY <= regions.signatureEnd) {
+        const progress = clamp((scrollY - regions.signatureStart) / Math.max(1, regions.signatureEnd - regions.signatureStart))
+        frameProgress = 45 + progress * 39
+        darken = revealThenFadeDarken(progress)
+        canvasOpacity = 0.9
+        shadeOpacity = 0.82
+        imageScale = 1.08
+      } else if (scrollY > regions.signatureEnd && scrollY < regions.deliveryStart) {
+        frameProgress = 84
+        darken = 0.84
+        canvasOpacity = 0.9
+        shadeOpacity = 0.82
+        imageScale = 1.08
+      } else if (scrollY >= regions.deliveryStart) {
+        const progress = clamp((scrollY - regions.deliveryStart) / Math.max(1, regions.deliveryEnd - regions.deliveryStart))
+        frameProgress = 84 + progress * (heroSequenceFrameCount - 1 - 84)
+        darken = revealThenFadeDarken(progress)
+        canvasOpacity = 0.88
+        shadeOpacity = 0.74
+        imageScale = 1.08
+      }
+
+      root.style.setProperty('--hero-scroll-darken', darken.toFixed(3))
+      root.style.setProperty('--sequence-canvas-opacity', String(canvasOpacity))
+      root.style.setProperty('--sequence-shade-opacity', String(shadeOpacity))
+      root.style.setProperty('--sequence-image-scale', String(imageScale))
+      queueHeroFrame(frameProgress)
+    }
+
+    const scheduleScrollUpdate = () => {
+      if (!scrollRaf) scrollRaf = requestAnimationFrame(updateScroll)
+    }
+
+    const onResize = () => {
+      if (resizeRaf) return
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = 0
+        refreshRegions()
+        resizeHeroCanvas()
+        scheduleScrollUpdate()
+      })
+    }
+
+    refreshRegions()
+    resizeHeroCanvas()
+    requestHeroFrame(0, true)
+    requestHeroFrame(1)
+    requestHeroFrame(2)
+    scheduleScrollUpdate()
+
+    const regionObserver = new ResizeObserver(onResize)
+    if (hero) regionObserver.observe(hero)
+    if (signatureSection) regionObserver.observe(signatureSection)
+    if (deliverySection) regionObserver.observe(deliverySection)
+
+    window.addEventListener('scroll', scheduleScrollUpdate, { passive: true })
+    window.addEventListener('resize', onResize, { passive: true })
+    document.fonts.ready.then(() => {
+      if (!isCancelled) onResize()
+    })
 
     return () => {
-      window.removeEventListener('pointermove', onPointerMove)
-      cancelAnimationFrame(rafId)
-      cancelAnimationFrame(heroSequenceRaf)
-      cleanupHeroSequence?.()
-      lenis.destroy()
-      context.revert()
+      isCancelled = true
+      revealObserver.disconnect()
+      regionObserver.disconnect()
+      window.removeEventListener('scroll', scheduleScrollUpdate)
+      window.removeEventListener('resize', onResize)
+      cancelAnimationFrame(scrollRaf)
+      cancelAnimationFrame(resizeRaf)
+      cancelAnimationFrame(readyRaf)
+      loadedFrames.forEach((image) => {
+        image.src = ''
+      })
+      loadingFrames.forEach((image) => {
+        image.src = ''
+      })
+      root.classList.remove('has-motion', 'is-ready')
     }
   }, [])
 
@@ -795,7 +755,7 @@ function App() {
 
       <header className="topbar">
         <a className="brand-lockup" href="#top" aria-label="Crema Gazi home">
-          <img className="brand-logo" src={brandLogo} alt="" />
+          <img className="brand-logo" src={brandLogo} alt="" width="512" height="437" decoding="async" />
         </a>
         <nav className="desktop-nav" aria-label="Primary navigation">
           {content.nav.map((item, index) => (
@@ -902,7 +862,15 @@ function App() {
             <p>{content.story.body}</p>
           </div>
           <div className="story-visual image-reveal">
-            <img className="story-logo" src={brandLogo} alt={content.story.logoAlt} />
+            <img
+              className="story-logo"
+              src={brandLogo}
+              alt={content.story.logoAlt}
+              width="512"
+              height="437"
+              loading="lazy"
+              decoding="async"
+            />
             <div>
               <span>{content.story.visualMain}</span>
               <strong>{content.story.visualSub}</strong>
@@ -923,7 +891,7 @@ function App() {
             {content.signatures.items.map((item, index) => (
               <article className="signature-card image-reveal" key={item.title}>
                 <span>{String(index + 1).padStart(2, '0')}</span>
-                <img src={signatureImages[index]} alt="" />
+                <img src={signatureImages[index]} alt="" loading="lazy" decoding="async" />
                 <div>
                   <h3>{item.title}</h3>
                   <p>{item.detail}</p>
@@ -945,7 +913,7 @@ function App() {
           <div className="products-rail">
             {content.products.items.map((item, index) => (
               <article className="product-card image-reveal" key={item.name}>
-                <img src={productImages[index]} alt="" loading="lazy" />
+                <img src={productImages[index]} alt="" loading="lazy" decoding="async" />
                 <div className="product-card-copy">
                   <span>{String(index + 1).padStart(2, '0')}</span>
                   <h3>{item.name}</h3>
@@ -963,7 +931,7 @@ function App() {
         <section className="gallery-section" aria-label="Crema product gallery">
           {gallery.map((src, index) => (
             <figure className="gallery-tile image-reveal" key={src}>
-              <img src={src} alt={`${content.galleryAlt} ${index + 1}`} loading="lazy" />
+              <img src={src} alt={`${content.galleryAlt} ${index + 1}`} loading="lazy" decoding="async" />
             </figure>
           ))}
         </section>
