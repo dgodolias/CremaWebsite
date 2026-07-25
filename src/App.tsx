@@ -20,11 +20,14 @@ import Lenis from 'lenis'
 import clsx from 'clsx'
 import { greekContent, supportedLanguages, type LanguageCode } from './content'
 
-const asset = (name: string) => `/assets/sourced/${name}`
+const baseUrl = import.meta.env.BASE_URL
+const asset = (name: string) => `${baseUrl}assets/sourced/${name}`
+const generatedAsset = (name: string) => `${baseUrl}assets/generated/${name}`
 const heroPoster = asset('crema-scroll-cover.avif')
 const heroSequenceFrameCount = 120
 const heroSequenceFrame = (frame: number) =>
-  `/assets/generated/hero-sequence/frame-${String(frame).padStart(3, '0')}.webp`
+  generatedAsset(`hero-sequence/frame-${String(frame).padStart(3, '0')}.webp`)
+const brandLogo = generatedAsset('crema-logo-trimmed.png')
 
 const signatureImages = [
   heroPoster,
@@ -792,7 +795,7 @@ function App() {
 
       <header className="topbar">
         <a className="brand-lockup" href="#top" aria-label="Crema Gazi home">
-          <img className="brand-logo" src="/assets/generated/crema-logo-trimmed.png" alt="" />
+          <img className="brand-logo" src={brandLogo} alt="" />
         </a>
         <nav className="desktop-nav" aria-label="Primary navigation">
           {content.nav.map((item, index) => (
@@ -899,7 +902,7 @@ function App() {
             <p>{content.story.body}</p>
           </div>
           <div className="story-visual image-reveal">
-            <img className="story-logo" src="/assets/generated/crema-logo-trimmed.png" alt={content.story.logoAlt} />
+            <img className="story-logo" src={brandLogo} alt={content.story.logoAlt} />
             <div>
               <span>{content.story.visualMain}</span>
               <strong>{content.story.visualSub}</strong>
