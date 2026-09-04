@@ -285,16 +285,28 @@ function GoogleTranslateBridge({
 
 function HeroScrollMedia() {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const sinceRef = useRef<HTMLParagraphElement>(null)
 
   useEffect(() => {
     const video = videoRef.current
-    if (!video || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const sinceMark = sinceRef.current
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     let frameId = 0
 
     const syncVideoToScroll = () => {
       frameId = 0
-      if (!Number.isFinite(video.duration) || video.duration <= 0) return
+
+      const fadeRange = Math.max(window.innerHeight * 0.72, 1)
+      const fadeProgress = Math.min(1, Math.max(0, window.scrollY / fadeRange))
+      const easedFade = fadeProgress * fadeProgress * (3 - 2 * fadeProgress)
+
+      if (sinceMark) {
+        sinceMark.style.opacity = String(1 - easedFade)
+        sinceMark.style.transform = `translate3d(0, ${-18 * easedFade}px, 0)`
+      }
+
+      if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return
 
       const scrollRange = Math.max(window.innerHeight * heroScrollScreens, 1)
       const progress = Math.min(1, Math.max(0, window.scrollY / scrollRange))
@@ -310,34 +322,40 @@ function HeroScrollMedia() {
       frameId = window.requestAnimationFrame(syncVideoToScroll)
     }
 
-    video.pause()
-    video.addEventListener('loadedmetadata', requestSync)
+    video?.pause()
+    video?.addEventListener('loadedmetadata', requestSync)
     window.addEventListener('scroll', requestSync, { passive: true })
     window.addEventListener('resize', requestSync, { passive: true })
     requestSync()
 
     return () => {
       if (frameId) window.cancelAnimationFrame(frameId)
-      video.removeEventListener('loadedmetadata', requestSync)
+      video?.removeEventListener('loadedmetadata', requestSync)
       window.removeEventListener('scroll', requestSync)
       window.removeEventListener('resize', requestSync)
     }
   }, [])
 
   return (
-    <div className="hero-media" aria-hidden="true">
-      <img className="hero-poster" src={heroPoster} alt="" decoding="async" fetchPriority="high" />
-      <video
-        ref={videoRef}
-        className="hero-video"
-        src={heroVideo}
-        poster={heroPoster}
-        muted
-        playsInline
-        preload="auto"
-      />
-      <div className="hero-media-shade" />
-    </div>
+    <>
+      <div className="hero-media" aria-hidden="true">
+        <img className="hero-poster" src={heroPoster} alt="" decoding="async" fetchPriority="high" />
+        <video
+          ref={videoRef}
+          className="hero-video"
+          src={heroVideo}
+          poster={heroPoster}
+          muted
+          playsInline
+          preload="auto"
+        />
+        <div className="hero-media-shade" />
+      </div>
+      <p ref={sinceRef} className="since-scroll-mark" aria-label="Crema, since 2009">
+        <span>Since</span>
+        <strong>2009</strong>
+      </p>
+    </>
   )
 }
 
@@ -440,10 +458,6 @@ function App() {
               <p className="eyebrow">
                 <Clock3 size={16} />
                 {content.hero.eyebrow}
-              </p>
-              <p className="since-badge">
-                <Star size={14} aria-hidden="true" />
-                Since 2009
               </p>
             </div>
             <h1 id="hero-title">

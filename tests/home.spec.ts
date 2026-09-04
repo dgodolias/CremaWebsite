@@ -9,7 +9,7 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
   await expect(page.locator('.hero-poster')).toHaveAttribute('src', /crema-scroll-cover\.avif/)
   await expect(page.locator('.hero-video')).toHaveAttribute('src', /crema-hero-crepe\.mp4/)
   await expect(page.locator('.hero-sequence-canvas')).toHaveCount(0)
-  await expect(page.locator('.since-badge')).toHaveText(/Since 2009/i)
+  await expect(page.locator('.since-scroll-mark')).toHaveText(/Since\s*2009/i)
   await expect(page.getByRole('link', { name: 'Crema menu' })).toHaveAttribute(
     'href',
     'https://www.e-food.gr/delivery/menu/crema',
@@ -111,7 +111,16 @@ test('crepe hero scrubs forward and backward with scroll without frame sequences
   await page.goto('./')
 
   const heroVideo = page.locator('.hero-video')
+  const sinceMark = page.locator('.since-scroll-mark')
   await expect.poll(() => heroVideo.evaluate((video: HTMLVideoElement) => video.readyState)).toBeGreaterThanOrEqual(2)
+
+  await expect.poll(() => sinceMark.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeGreaterThan(0.95)
+
+  await page.evaluate(() => window.scrollTo(0, window.innerHeight))
+  await expect.poll(() => sinceMark.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeLessThan(0.05)
+
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await expect.poll(() => sinceMark.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeGreaterThan(0.95)
 
   await page.evaluate(() => window.scrollTo(0, window.innerHeight * 2))
   await expect.poll(() => heroVideo.evaluate((video: HTMLVideoElement) => video.currentTime)).toBeGreaterThan(4)

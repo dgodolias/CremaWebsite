@@ -476,20 +476,33 @@ body {
   margin: 0;
 }
 
-.since-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
+.since-scroll-mark {
+  position: fixed;
+  top: clamp(220px, 34vh, 350px);
+  right: clamp(48px, 16vw, 300px);
+  z-index: 4;
+  display: grid;
+  gap: 2px;
   margin: 0;
-  border: 1px solid rgba(142, 207, 79, 0.52);
-  border-radius: 999px;
-  padding: 9px 12px;
+  border-left: 3px solid var(--green);
+  padding: 6px 0 7px 14px;
   color: var(--green);
-  background: rgba(16, 16, 14, 0.62);
+  filter: drop-shadow(0 5px 18px rgba(0, 0, 0, 0.48));
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+.since-scroll-mark span {
   font-size: 0.72rem;
   font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+.since-scroll-mark strong {
+  font-size: clamp(2.3rem, 3.4vw, 4rem);
+  font-weight: 950;
+  letter-spacing: -0.07em;
+  line-height: 0.82;
 }
 
 .eyebrow {
@@ -1214,6 +1227,10 @@ h1 {
 }
 
 @media (max-width: 1040px) {
+  .since-scroll-mark {
+    right: 5vw;
+  }
+
   .story-section,
   .location-section,
   .delivery-section,
@@ -1235,6 +1252,21 @@ h1 {
 }
 
 @media (max-width: 760px) {
+  .since-scroll-mark {
+    top: 142px;
+    right: 18px;
+    border-left-width: 2px;
+    padding: 4px 0 5px 10px;
+  }
+
+  .since-scroll-mark span {
+    font-size: 0.62rem;
+  }
+
+  .since-scroll-mark strong {
+    font-size: clamp(1.8rem, 9vw, 2.45rem);
+  }
+
   .topbar {
     top: 10px;
     width: calc(100% - 18px);
@@ -1408,5 +1440,9 @@ h1 {
 
   .hero-video {
     display: none;
+  }
+
+  .since-scroll-mark {
+    position: absolute;
   }
 }

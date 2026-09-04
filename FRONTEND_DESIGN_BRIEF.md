@@ -9,7 +9,7 @@
 
 The homepage must truthfully present Crema's current delivery range without Illy or puff-pastry imagery. Visitors should immediately find Dimello coffee, oat bars, Arabic wraps, Club Sandwich XL and Provio ice cream, then continue to an external ordering service.
 
-The hero also promotes the owner-provided heritage claim `Since 2009` as a prominent trust badge.
+The hero also promotes the owner-provided heritage claim `Since 2009` as a prominent right-side mark that fades out while scrolling down and returns while scrolling up.
 
 Success means all five offers are visible on desktop and mobile, no visible or deployed Illy/puff-pastry asset remains, product copy agrees with the live e-food menu checked on 2026-09-04, and the order links continue to work.
 
