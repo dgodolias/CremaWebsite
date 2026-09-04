@@ -7,7 +7,9 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
   await expect(page.locator('#google_translate_element')).toHaveCount(1)
   await expect(page.locator('.hero-media')).toBeVisible()
   await expect(page.locator('.hero-poster')).toHaveAttribute('src', /crema-scroll-cover\.avif/)
+  await expect(page.locator('.hero-video')).toHaveAttribute('src', /crema-hero-crepe\.mp4/)
   await expect(page.locator('.hero-sequence-canvas')).toHaveCount(0)
+  await expect(page.locator('.since-badge')).toHaveText(/Since 2009/i)
   await expect(page.getByRole('link', { name: 'Crema menu' })).toHaveAttribute(
     'href',
     'https://www.e-food.gr/delivery/menu/crema',
@@ -29,6 +31,7 @@ test('featured menu reflects the requested brands and categories', async ({ page
   await expect(site).toContainText('Αραβική πίτα')
   await expect(site).toContainText('Club Sandwich XL')
   await expect(site).toContainText('Παγωτό Provio')
+  await expect(page.locator('.product-card').first().locator('img')).toHaveAttribute('src', /dimello-coffee\.avif/)
   await expect(page.locator('.provio-spotlight')).toContainText('Μάρκα που στηρίζουμε')
   await expect(page.locator('.provio-spotlight img')).toHaveAttribute('src', /provio-logo-reference\.png/)
   await expect(site).not.toContainText(/Illy|σφολιάτ|croissant|pastry/i)
@@ -104,14 +107,20 @@ test('desktop uses the native pointer without a continuous cursor animation', as
   expect(overflow).toBeLessThanOrEqual(2)
 })
 
-test('initial load stays free of frame sequences and deferred translation requests', async ({ page }) => {
+test('animated crepe hero stays free of frame sequences and deferred translation requests', async ({ page }) => {
   await page.goto('./')
+
+  const heroVideo = page.locator('.hero-video')
+  await expect(heroVideo).toHaveAttribute('autoplay', '')
+  await expect(heroVideo).toHaveAttribute('loop', '')
+  await expect.poll(() => heroVideo.evaluate((video: HTMLVideoElement) => video.readyState)).toBeGreaterThanOrEqual(2)
+
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
 
   const resources = await page.evaluate(() =>
     performance.getEntriesByType('resource').map((entry) => entry.name),
   )
 
-  expect(resources.some((url) => /hero-sequence|crema-hero-scroll/.test(url))).toBe(false)
+  expect(resources.some((url) => /hero-sequence|frame-\d+\.webp/.test(url))).toBe(false)
   expect(resources.some((url) => url.includes('translate.google.com/translate_a/element.js'))).toBe(false)
 })

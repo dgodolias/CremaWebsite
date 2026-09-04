@@ -9,6 +9,8 @@
 
 The homepage must truthfully present Crema's current delivery range without Illy or puff-pastry imagery. Visitors should immediately find Dimello coffee, oat bars, Arabic wraps, Club Sandwich XL and Provio ice cream, then continue to an external ordering service.
 
+The hero also promotes the owner-provided heritage claim `Since 2009` as a prominent trust badge.
+
 Success means all five offers are visible on desktop and mobile, no visible or deployed Illy/puff-pastry asset remains, product copy agrees with the live e-food menu checked on 2026-09-04, and the order links continue to work.
 
 ## Users, journeys and risk
@@ -30,13 +32,13 @@ Success means all five offers are visible on desktop and mobile, no visible or d
 
 ## Visual and expression direction
 
-Preserve the established Crema charcoal, cream, green and orange palette, handwritten logo energy, high-contrast editorial type and photo-led cards. Use an authentic Dimello photograph as a static hero so scrolling remains immediate even on modest phones.
+Preserve the established Crema charcoal, cream, green and orange palette, handwritten logo energy, high-contrast editorial type and photo-led cards. Keep the owner-selected rotating-crepe hero as a compact native video while retaining immediate native scrolling.
 
-Selected expression: `Balanced`; the selected amplifier is X02 signature imagery. Continuous scroll-scrub, custom-cursor and marquee animation are excluded to protect runtime performance.
+Selected expression: `Balanced`; the selected amplifiers are X02 signature imagery, the lightweight hero motion and one-time entrance/reveal transitions. Continuous JavaScript scroll-scrub, custom-cursor and marquee animation remain excluded to protect runtime performance.
 
 ## Trigger register
 
-- **C07 / C08 / D08 / O08:** Active for product images and static hero media.
+- **C07 / C08 / D08 / O08:** Active for product images and native hero media.
 - **M01:** `N/A-D`; this homepage links to external ordering and does not collect a cart, price commitment or payment.
 - **M02–M12, C09, D07, D09–D11:** `N/A-D` for this static marketing release; reassess if local ordering, live data, personalization or social features are added.
 

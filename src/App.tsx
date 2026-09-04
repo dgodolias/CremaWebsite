@@ -23,18 +23,20 @@ const baseUrl = import.meta.env.BASE_URL
 const asset = (name: string) => `${baseUrl}assets/sourced/${name}`
 const generatedAsset = (name: string) => `${baseUrl}assets/generated/${name}`
 const heroPoster = asset('crema-scroll-cover.avif')
+const heroVideo = generatedAsset('crema-hero-crepe.mp4')
+const dimelloCoffee = asset('dimello-coffee.avif')
 const brandLogo = generatedAsset('crema-logo-optimized.webp')
 const provioLogo = asset('provio-logo-reference.png')
 
 const signatureImages = [
-  heroPoster,
+  dimelloCoffee,
   asset('crema-oat-bar-strawberry.avif'),
   asset('crema-arabic-wrap-wolt.avif'),
   asset('crema-club-xl-wolt.avif'),
 ]
 
 const gallery = [
-  heroPoster,
+  dimelloCoffee,
   asset('crema-oat-bar-strawberry.avif'),
   asset('crema-arabic-wrap-wolt.avif'),
   asset('crema-club-xl-wolt.avif'),
@@ -43,7 +45,7 @@ const gallery = [
 ]
 
 const productImages = [
-  heroPoster,
+  dimelloCoffee,
   asset('crema-oat-bar-strawberry.avif'),
   asset('crema-arabic-wrap-wolt.avif'),
   asset('crema-club-xl-wolt.avif'),
@@ -284,15 +286,57 @@ function HeroScrollMedia() {
   return (
     <div className="hero-media" aria-hidden="true">
       <img className="hero-poster" src={heroPoster} alt="" decoding="async" fetchPriority="high" />
+      <video
+        className="hero-video"
+        src={heroVideo}
+        poster={heroPoster}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="metadata"
+      />
       <div className="hero-media-shade" />
     </div>
   )
+}
+
+function useRevealEffects() {
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const root = document.documentElement
+    const targets = document.querySelectorAll<HTMLElement>('.image-reveal, .section-copy, .delivery-panel')
+    root.classList.add('reveal-effects')
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue
+          entry.target.classList.add('is-revealed')
+          observer.unobserve(entry.target)
+        }
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
+    )
+
+    targets.forEach((target, index) => {
+      target.style.setProperty('--reveal-delay', `${(index % 4) * 55}ms`)
+      observer.observe(target)
+    })
+
+    return () => {
+      observer.disconnect()
+      root.classList.remove('reveal-effects')
+    }
+  }, [])
 }
 
 function App() {
   const [language, setLanguage] = useState<LanguageCode>(getInitialLanguage)
   const [translationState, setTranslationState] = useState<TranslationState>('idle')
   const content = greekContent
+  useRevealEffects()
 
   const handleLanguageChange = (nextLanguage: LanguageCode) => {
     if (nextLanguage === language) return
@@ -352,10 +396,16 @@ function App() {
         <section className="hero" aria-labelledby="hero-title">
           <div className="hero-noise" />
           <div className="hero-copy">
-            <p className="eyebrow">
-              <Clock3 size={16} />
-              {content.hero.eyebrow}
-            </p>
+            <div className="hero-kickers">
+              <p className="eyebrow">
+                <Clock3 size={16} />
+                {content.hero.eyebrow}
+              </p>
+              <p className="since-badge">
+                <Star size={14} aria-hidden="true" />
+                Since 2009
+              </p>
+            </div>
             <h1 id="hero-title">
               <span className="line-mask">
                 <span className="reveal-line script-word">{content.hero.brand}</span>

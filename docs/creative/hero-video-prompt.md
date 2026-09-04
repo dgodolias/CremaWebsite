@@ -1,5 +1,10 @@
-# Retired Crema Gazi Hero Motion Concept
+# Crema Gazi Rotating-Crepe Hero
 
-The former scroll-scrub video and 120-frame WebP sequence were retired on 2026-09-04 because they made the page heavy and caused scroll jank.
+The owner-selected rotating-crepe hero is active again using:
 
-The live hero now uses only `public/assets/sourced/crema-scroll-cover.avif`, an optimized derivative of authentic Dimello photography. Do not restore a frame sequence or continuous JavaScript animation without a measured performance budget and an explicit owner request.
+- Poster: `public/assets/sourced/crema-scroll-cover.avif`
+- Video: `public/assets/generated/crema-hero-crepe.mp4`
+
+The 10-second source animation was restored from project history and re-encoded as a 960×540 H.264 MP4 at 899,507 bytes. The page uses a native muted, looping, inline video with an AVIF poster. Under `prefers-reduced-motion`, only the poster is shown.
+
+The former 120-frame WebP sequence, canvas renderer and JavaScript scroll-scrub runtime remain retired. This preserves the rotating-crepe visual without restoring the primary source of scroll jank.
