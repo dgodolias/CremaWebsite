@@ -1,18 +1,25 @@
 # Completion Audit — 2026-09-04
 
-## Objective
+## Objective and verdict
 
-Publish the requested Crema menu/brand refresh, then remove the sources of scroll jank and publish a second performance commit.
+Prepare the Crema homepage release with authentic, non-repeated menu photography; retain the requested Dimello, bars, Arabic pitas, Club Sandwich XL and Provio emphasis; replace the MP4 with a lightweight scroll-reactive hero photograph; and add one order disclosure for e-food, BOX and Wolt.
 
-## Evidence
+**Local release verdict: Pass.** Every implementation requirement below has direct source, build, browser or visual evidence. Commit, push and public GitHub Pages verification remain the final delivery gates and are reported in the release handoff.
 
-- **Content checkpoint — Pass:** commit `e9c1ee8` was pushed to `origin/main` before performance work began.
-- **Requested content — Pass:** automated checks cover Dimello, oat bars, Arabic pita, Club Sandwich XL, Provio and the prominent `Since 2009` hero mark, plus the absence of Illy and puff-pastry terms.
-- **Heritage mark interaction — Pass:** the `Since 2009` mark is positioned in the open right side of the hero and shares the existing coalesced scroll frame. Browser measurements recorded opacity `1 → 0.5 → 0 → 1` at the top, midpoint, one viewport down and after returning to the top; desktop placement had no header/headline overlap, mobile had no header/eyebrow overlap, and reduced-motion keeps a static mark that scrolls away naturally.
-- **Authentic product photography — Pass:** deployed menu cards are compact derivatives of the recorded e-food/Wolt/vendor sources in `public/assets/sourced/SOURCES.md`; the owner-selected rotating-crepe hero is restored and disclosed separately.
-- **Runtime performance — Pass:** the Lenis/GSAP loop, 120-frame canvas loader, custom-cursor RAF, animated marquee, remote font request and startup Google Translate request remain removed or deferred. The rotating-crepe timeline follows scroll in both directions through one passive listener with requestAnimationFrame coalescing; entrance effects use compositor-friendly CSS and a one-shot IntersectionObserver.
-- **Payload — Pass:** after restoring a seek-optimized animation and keeping a separate authentic Dimello image, public assets remain about 91.3% smaller than the original 15,413,386-byte bundle; production JavaScript remains about 215 kB instead of 352.42 kB.
-- **Quality gates — Pass:** `npm run lint`, `npm run build` and 14 Playwright checks pass across desktop Chromium and mobile Safari profiles.
-- **Browser QA — Pass:** smoke checks found zero broken images, horizontal overflow, console errors, page errors or hero-frame requests. The paused video mapped 0s → 2.49s → 4.98s while scrolling down, returned to 1.245s when scrolling up, and drifted 0s while idle. Reduced-motion kept it at 0s; measured resource transfer was about 1.40 MB locally.
+## Requirement evidence
 
-The performance commit containing this audit is ready for the final `origin/main` push verification.
+- **Requested content — Pass:** automated checks cover Dimello, handmade bars, Arabic pitas, Club Sandwich XL, Provio and the prominent `Since 2009` hero mark. Visible copy has no Illy, puff-pastry, croissant or pastry reference.
+- **Authentic product photography — Pass:** every deployed food image is an optimized derivative of an owner-selected or recorded e-food/Wolt/vendor source in `public/assets/sourced/SOURCES.md`; no generated or composited food image is shipped.
+- **No repeated product set — Pass:** browser evaluation finds 16 displayed food photographs and 16 unique image URLs across recommendations, expanded-menu cards, Provio and the gallery on desktop and mobile. Visual review confirms the expanded set includes waffle, Caesar's salad, Banoffee, fruit salad, fresh juice, cheesecake, milkshake, yogurt bowl, mousse, lemon pie and donut.
+- **Provio treatment — Pass:** the spotlight displays the authentic branded Provio Amarena tub, a separate official Provio logo and explicit support copy naming Provio ice cream.
+- **Card integrity — Pass:** product cards use intrinsic flex sizing rather than percentage-height copy regions. Browser regression checks report no card whose `scrollHeight` exceeds its visible height and no CTA extending beyond its card at desktop or mobile widths.
+- **Ordering disclosure — Pass:** the hero `Παραγγελία` control reveals exactly three external destinations: e-food, BOX and Wolt. The panel stays inside both tested viewports, closes with Escape/outside press/selection and returns focus after keyboard dismissal.
+- **Hero motion — Pass:** the MP4 and old frame sequence are absent. One 1440×810 AVIF scales from `1.025` to `1.18` and blurs from `0px` to `4.5px` while scrolling toward the third black section, then reverses to `1.025` and `0px` as that section reaches the top.
+- **Motion accessibility — Pass:** `prefers-reduced-motion` leaves the photograph static and sharp. Entrance reveals are one-shot, and the time-based alpha loop stops after settling.
+- **Runtime performance — Pass:** there are zero idle animation-frame callbacks, zero MP4 requests and zero horizontal overflow in the desktop and mobile smoke runs. Local transferred resources measured 396,713 bytes on desktop and 354,719 bytes on mobile.
+- **Payload — Pass:** the 21 files under `public/assets` total 366,234 bytes, 97.6% below the former 15,413,386-byte bundle. The production output is 29.35 kB CSS and 218.19 kB JavaScript before gzip (7.38 kB and 68.99 kB gzipped).
+- **Quality gates — Pass:** `npm run lint`, `npm run build` and all 16 Playwright checks pass across desktop Chromium and mobile Safari profiles. Browser smoke checks found no console errors, page errors or broken required interactions.
+
+## Open findings
+
+No open P0/P1 or release-blocking P2 finding remains in the requested scope.

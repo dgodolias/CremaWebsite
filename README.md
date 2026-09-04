@@ -6,7 +6,7 @@ Premium React/TypeScript/Tailwind website for Crema Gazi, featuring Dimello coff
 
 - React + TypeScript + Vite
 - Tailwind CSS v4
-- Native browser scrolling with an optimized native-video hero
+- Native browser scrolling with a lightweight zoom-and-blur hero image
 - AVIF/WebP product and brand assets
 - Playwright visual/behavior checks
 

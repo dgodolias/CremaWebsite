@@ -23,11 +23,20 @@ const baseUrl = import.meta.env.BASE_URL
 const asset = (name: string) => `${baseUrl}assets/sourced/${name}`
 const generatedAsset = (name: string) => `${baseUrl}assets/generated/${name}`
 const heroPoster = asset('crema-scroll-cover.avif')
-const heroVideo = generatedAsset('crema-hero-crepe.mp4')
 const dimelloCoffee = asset('dimello-coffee.avif')
 const brandLogo = generatedAsset('crema-logo-optimized.webp')
 const provioLogo = asset('provio-logo-reference.png')
-const heroScrollScreens = 4
+const provioIceCream = asset('provio-amarena-wolt.avif')
+const heroImageBaseScale = 1.025
+const heroImageZoomScale = 1.18
+const heroImageMaxBlur = 4.5
+const heroImageSmoothingTimeConstant = 85
+const heroImageSettleThreshold = 0.001
+const orderPlatforms = [
+  { id: 'efood', label: 'e-food', href: 'https://www.e-food.gr/delivery/menu/crema' },
+  { id: 'box', label: 'BOX', href: 'https://box.gr/delivery/gkazi/crema-gkazi' },
+  { id: 'wolt', label: 'Wolt', href: 'https://wolt.com/el/grc/athens/restaurant/crema' },
+] as const
 
 const signatureImages = [
   dimelloCoffee,
@@ -36,21 +45,21 @@ const signatureImages = [
   asset('crema-club-xl-wolt.avif'),
 ]
 
-const gallery = [
-  dimelloCoffee,
-  asset('crema-oat-bar-strawberry.avif'),
-  asset('crema-arabic-wrap-wolt.avif'),
-  asset('crema-club-xl-wolt.avif'),
-  asset('crema-ice-cream-wolt.avif'),
-  asset('provio-amarena-wolt.avif'),
+const galleryImages = [
+  asset('crema-cheesecake-wolt.avif'),
+  asset('crema-milkshake-wolt.avif'),
+  asset('crema-yogurt-bowl-wolt.avif'),
+  asset('crema-mousse-cookies-wolt.avif'),
+  asset('crema-lemon-pie-wolt.avif'),
+  asset('crema-donut-bueno-wolt.avif'),
 ]
 
 const productImages = [
-  dimelloCoffee,
-  asset('crema-oat-bar-strawberry.avif'),
-  asset('crema-arabic-wrap-wolt.avif'),
-  asset('crema-club-xl-wolt.avif'),
-  asset('provio-amarena-wolt.avif'),
+  asset('crema-waffle-wolt.avif'),
+  asset('crema-caesar-wolt.avif'),
+  asset('crema-banoffee-wolt.avif'),
+  asset('crema-fruit-salad-wolt.avif'),
+  asset('crema-mixed-juice-wolt.avif'),
 ]
 
 const navTargets = ['story', 'signatures', 'gazi', 'delivery']
@@ -113,6 +122,79 @@ function MagneticLink({
     >
       {children}
     </a>
+  )
+}
+
+function OrderMenu({ label }: { label: string }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target
+      if (target instanceof Node && !menuRef.current?.contains(target)) {
+        setIsOpen(false)
+      }
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      setIsOpen(false)
+      triggerRef.current?.focus()
+    }
+
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [isOpen])
+
+  return (
+    <div className="order-picker" ref={menuRef}>
+      <button
+        ref={triggerRef}
+        className="magnetic-link magnetic-link-primary order-trigger"
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls="hero-order-options"
+        onClick={() => setIsOpen((value) => !value)}
+      >
+        <ShoppingBag size={18} />
+        <span>{label}</span>
+        <ChevronDown className={clsx('order-chevron', isOpen && 'is-open')} size={16} aria-hidden="true" />
+      </button>
+
+      {isOpen && (
+        <div className="order-panel" id="hero-order-options">
+          {orderPlatforms.map((platform, index) => (
+            <a
+              className="order-option"
+              data-platform={platform.id}
+              href={platform.href}
+              target="_blank"
+              rel="noreferrer"
+              key={platform.id}
+              onClick={() => setIsOpen(false)}
+            >
+              <span className={clsx('order-platform-mark', `is-${platform.id}`)} aria-hidden="true">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <span className="order-platform-copy">
+                <strong>{platform.label}</strong>
+                <small>Παράγγειλε μέσω {platform.label}</small>
+              </span>
+              <ArrowUpRight size={16} aria-hidden="true" />
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -283,20 +365,52 @@ function GoogleTranslateBridge({
   )
 }
 
-function HeroScrollMedia() {
-  const videoRef = useRef<HTMLVideoElement>(null)
+function HeroScrollImage() {
+  const imageRef = useRef<HTMLImageElement>(null)
   const sinceRef = useRef<HTMLParagraphElement>(null)
 
   useEffect(() => {
-    const video = videoRef.current
+    const heroImage = imageRef.current
     const sinceMark = sinceRef.current
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     let frameId = 0
+    let targetEffectProgress = 0
+    let renderedEffectProgress = 0
+    let lastFrameTimestamp = 0
 
-    const syncVideoToScroll = () => {
+    const renderImageEffect = (timestamp: number) => {
       frameId = 0
+      if (!heroImage) return
 
+      const progressDelta = targetEffectProgress - renderedEffectProgress
+      const frameDuration = lastFrameTimestamp ? Math.min(timestamp - lastFrameTimestamp, 160) : 1000 / 60
+      const interpolationAlpha = 1 - Math.exp(-frameDuration / heroImageSmoothingTimeConstant)
+      lastFrameTimestamp = timestamp
+      renderedEffectProgress = Math.abs(progressDelta) <= heroImageSettleThreshold
+        ? targetEffectProgress
+        : renderedEffectProgress + progressDelta * interpolationAlpha
+
+      const scale = heroImageBaseScale + (heroImageZoomScale - heroImageBaseScale) * renderedEffectProgress
+      const blur = heroImageMaxBlur * renderedEffectProgress
+      heroImage.style.setProperty('--hero-image-scale', scale.toFixed(4))
+      heroImage.style.setProperty('--hero-image-blur', `${blur.toFixed(2)}px`)
+
+      if (Math.abs(targetEffectProgress - renderedEffectProgress) > heroImageSettleThreshold) {
+        frameId = window.requestAnimationFrame(renderImageEffect)
+      } else {
+        heroImage.classList.remove('is-transforming')
+        lastFrameTimestamp = 0
+      }
+    }
+
+    const requestAnimation = () => {
+      if (frameId || Math.abs(targetEffectProgress - renderedEffectProgress) <= heroImageSettleThreshold) return
+      heroImage?.classList.add('is-transforming')
+      frameId = window.requestAnimationFrame(renderImageEffect)
+    }
+
+    const syncScrollTargets = () => {
       const fadeRange = Math.max(window.innerHeight * 0.72, 1)
       const fadeProgress = Math.min(1, Math.max(0, window.scrollY / fadeRange))
       const easedFade = fadeProgress * fadeProgress * (3 - 2 * fadeProgress)
@@ -306,49 +420,34 @@ function HeroScrollMedia() {
         sinceMark.style.transform = `translate3d(0, ${-18 * easedFade}px, 0)`
       }
 
-      if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return
+      const signatureSection = document.querySelector<HTMLElement>('.signature-section')
+      const reverseStart = Math.max(
+        (signatureSection?.offsetTop ?? window.innerHeight * 2) - window.innerHeight,
+        window.innerHeight * 0.65,
+      )
+      const reverseEnd = Math.max(signatureSection?.offsetTop ?? reverseStart + window.innerHeight, reverseStart + 1)
 
-      const scrollRange = Math.max(window.innerHeight * heroScrollScreens, 1)
-      const progress = Math.min(1, Math.max(0, window.scrollY / scrollRange))
-      const targetTime = progress * Math.max(video.duration - 0.04, 0)
-
-      if (Math.abs(video.currentTime - targetTime) > 0.015) {
-        video.currentTime = targetTime
-      }
+      targetEffectProgress = window.scrollY <= reverseStart
+        ? Math.min(1, Math.max(0, window.scrollY / reverseStart))
+        : 1 - Math.min(1, Math.max(0, (window.scrollY - reverseStart) / (reverseEnd - reverseStart)))
+      requestAnimation()
     }
 
-    const requestSync = () => {
-      if (frameId) return
-      frameId = window.requestAnimationFrame(syncVideoToScroll)
-    }
-
-    video?.pause()
-    video?.addEventListener('loadedmetadata', requestSync)
-    window.addEventListener('scroll', requestSync, { passive: true })
-    window.addEventListener('resize', requestSync, { passive: true })
-    requestSync()
+    window.addEventListener('scroll', syncScrollTargets, { passive: true })
+    window.addEventListener('resize', syncScrollTargets, { passive: true })
+    syncScrollTargets()
 
     return () => {
       if (frameId) window.cancelAnimationFrame(frameId)
-      video?.removeEventListener('loadedmetadata', requestSync)
-      window.removeEventListener('scroll', requestSync)
-      window.removeEventListener('resize', requestSync)
+      window.removeEventListener('scroll', syncScrollTargets)
+      window.removeEventListener('resize', syncScrollTargets)
     }
   }, [])
 
   return (
     <>
       <div className="hero-media" aria-hidden="true">
-        <img className="hero-poster" src={heroPoster} alt="" decoding="async" fetchPriority="high" />
-        <video
-          ref={videoRef}
-          className="hero-video"
-          src={heroVideo}
-          poster={heroPoster}
-          muted
-          playsInline
-          preload="auto"
-        />
+        <img ref={imageRef} className="hero-poster" src={heroPoster} alt="" decoding="async" fetchPriority="high" />
         <div className="hero-media-shade" />
       </div>
       <p ref={sinceRef} className="since-scroll-mark" aria-label="Crema, since 2009">
@@ -415,7 +514,7 @@ function App() {
 
   return (
     <div className="site-shell">
-      <HeroScrollMedia />
+      <HeroScrollImage />
       <GoogleTranslateBridge language={language} onStateChange={setTranslationState} />
 
       <header className="topbar">
@@ -476,15 +575,7 @@ function App() {
               {content.hero.subcopy}
             </p>
             <div className="hero-actions">
-              <MagneticLink href="https://wolt.com/el/grc/athens/restaurant/crema">
-                <ShoppingBag size={18} />
-                {content.hero.orderWolt}
-                <ArrowUpRight size={16} />
-              </MagneticLink>
-              <MagneticLink href="https://www.e-food.gr/delivery/menu/crema" variant="secondary">
-                {content.hero.orderEfood}
-                <ArrowUpRight size={16} />
-              </MagneticLink>
+              <OrderMenu label={content.hero.order} />
             </div>
           </div>
 
@@ -586,7 +677,8 @@ function App() {
 
         <section className="provio-spotlight" aria-labelledby="provio-title">
           <div className="provio-mark image-reveal">
-            <img src={provioLogo} alt={content.provio.logoAlt} width="150" height="151" loading="lazy" decoding="async" />
+            <img className="provio-product" src={provioIceCream} alt={content.provio.productAlt} width="960" height="540" loading="lazy" decoding="async" />
+            <img className="provio-logo" src={provioLogo} alt={content.provio.logoAlt} width="150" height="151" loading="lazy" decoding="async" />
           </div>
           <div className="provio-copy section-copy">
             <p className="eyebrow">
@@ -598,10 +690,11 @@ function App() {
           </div>
         </section>
 
-        <section className="gallery-section" aria-label="Crema product gallery">
-          {gallery.map((src, index) => (
+        <section className="gallery-section" aria-label={content.gallery.label}>
+          {galleryImages.map((src, index) => (
             <figure className="gallery-tile image-reveal" key={src}>
-              <img src={src} alt={`${content.galleryAlt} ${index + 1}`} width="960" height="540" loading="lazy" decoding="async" />
+              <img src={src} alt={content.gallery.items[index]} width="960" height="540" loading="lazy" decoding="async" />
+              <figcaption>{content.gallery.items[index]}</figcaption>
             </figure>
           ))}
         </section>
