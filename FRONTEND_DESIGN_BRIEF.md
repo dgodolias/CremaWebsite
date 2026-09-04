@@ -32,9 +32,9 @@ Success means all five offers are visible on desktop and mobile, no visible or d
 
 ## Visual and expression direction
 
-Preserve the established Crema charcoal, cream, green and orange palette, handwritten logo energy, high-contrast editorial type and photo-led cards. Keep the owner-selected rotating-crepe hero as a compact native video while retaining immediate native scrolling.
+Preserve the established Crema charcoal, cream, green and orange palette, handwritten logo energy, high-contrast editorial type and photo-led cards. Keep the owner-selected rotating-crepe hero as a compact native video whose timeline follows native scrolling forward and backward.
 
-Selected expression: `Balanced`; the selected amplifiers are X02 signature imagery, the lightweight hero motion and one-time entrance/reveal transitions. Continuous JavaScript scroll-scrub, custom-cursor and marquee animation remain excluded to protect runtime performance.
+Selected expression: `Balanced`; the selected amplifiers are X02 signature imagery, the lightweight scroll-linked hero and one-time entrance/reveal transitions. Third-party smooth scrolling, continuous animation loops, custom-cursor and marquee animation remain excluded to protect runtime performance.
 
 ## Trigger register
 

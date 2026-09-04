@@ -5,7 +5,7 @@ The deployed product-card photography is authentic menu/vendor photography. No n
 ## Live assets
 
 - `crema-scroll-cover.avif`: optimized derivative of the owner/user-provided rotating-crepe hero cover retained from the original project.
-- `public/assets/generated/crema-hero-crepe.mp4`: compact H.264 re-encode of the original 10-second rotating-crepe hero animation retained from project history; reduced from 9,688,681 bytes to 899,507 bytes.
+- `public/assets/generated/crema-hero-crepe.mp4`: scrub-optimized H.264 re-encode of the original 10-second rotating-crepe hero animation retained from project history; frequent keyframes support responsive forward and reverse seeking without the old 120-image payload.
 - `dimello-coffee.avif`: optimized derivative of the Dimello lifestyle photograph published by Kafea Terra at `https://kafeaterra.gr/wp-content/uploads/Brand_Dimello-Featured_Landscape-3x2.jpg`.
 - `crema-oat-bar-strawberry.avif`: optimized derivative of the strawberry oat-bar menu image from e-food, `https://cdn.e-food.gr/cdn-cgi/image/h=800,fit=cover,f=auto/global_assets/vertical:food:mpara-brwmis-phraoula?c=1773679255`.
 - `crema-club-xl-wolt.avif`: optimized derivative of the Club Sandwich XL menu image from Wolt, `https://imageproxy.wolt.com/menu/menu-images/601d640fa9eedbe434d53a3e/50f4e768-69f5-11eb-8f27-22c864d55396____9_.jpeg`.

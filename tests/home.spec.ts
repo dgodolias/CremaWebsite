@@ -107,13 +107,18 @@ test('desktop uses the native pointer without a continuous cursor animation', as
   expect(overflow).toBeLessThanOrEqual(2)
 })
 
-test('animated crepe hero stays free of frame sequences and deferred translation requests', async ({ page }) => {
+test('crepe hero scrubs forward and backward with scroll without frame sequences', async ({ page }) => {
   await page.goto('./')
 
   const heroVideo = page.locator('.hero-video')
-  await expect(heroVideo).toHaveAttribute('autoplay', '')
-  await expect(heroVideo).toHaveAttribute('loop', '')
   await expect.poll(() => heroVideo.evaluate((video: HTMLVideoElement) => video.readyState)).toBeGreaterThanOrEqual(2)
+
+  await page.evaluate(() => window.scrollTo(0, window.innerHeight * 2))
+  await expect.poll(() => heroVideo.evaluate((video: HTMLVideoElement) => video.currentTime)).toBeGreaterThan(4)
+  const forwardTime = await heroVideo.evaluate((video: HTMLVideoElement) => video.currentTime)
+
+  await page.evaluate(() => window.scrollTo(0, window.innerHeight * 0.5))
+  await expect.poll(() => heroVideo.evaluate((video: HTMLVideoElement) => video.currentTime)).toBeLessThan(forwardTime - 2)
 
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
 

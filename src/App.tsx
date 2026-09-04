@@ -27,6 +27,7 @@ const heroVideo = generatedAsset('crema-hero-crepe.mp4')
 const dimelloCoffee = asset('dimello-coffee.avif')
 const brandLogo = generatedAsset('crema-logo-optimized.webp')
 const provioLogo = asset('provio-logo-reference.png')
+const heroScrollScreens = 4
 
 const signatureImages = [
   dimelloCoffee,
@@ -283,18 +284,57 @@ function GoogleTranslateBridge({
 }
 
 function HeroScrollMedia() {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    let frameId = 0
+
+    const syncVideoToScroll = () => {
+      frameId = 0
+      if (!Number.isFinite(video.duration) || video.duration <= 0) return
+
+      const scrollRange = Math.max(window.innerHeight * heroScrollScreens, 1)
+      const progress = Math.min(1, Math.max(0, window.scrollY / scrollRange))
+      const targetTime = progress * Math.max(video.duration - 0.04, 0)
+
+      if (Math.abs(video.currentTime - targetTime) > 0.015) {
+        video.currentTime = targetTime
+      }
+    }
+
+    const requestSync = () => {
+      if (frameId) return
+      frameId = window.requestAnimationFrame(syncVideoToScroll)
+    }
+
+    video.pause()
+    video.addEventListener('loadedmetadata', requestSync)
+    window.addEventListener('scroll', requestSync, { passive: true })
+    window.addEventListener('resize', requestSync, { passive: true })
+    requestSync()
+
+    return () => {
+      if (frameId) window.cancelAnimationFrame(frameId)
+      video.removeEventListener('loadedmetadata', requestSync)
+      window.removeEventListener('scroll', requestSync)
+      window.removeEventListener('resize', requestSync)
+    }
+  }, [])
+
   return (
     <div className="hero-media" aria-hidden="true">
       <img className="hero-poster" src={heroPoster} alt="" decoding="async" fetchPriority="high" />
       <video
+        ref={videoRef}
         className="hero-video"
         src={heroVideo}
         poster={heroPoster}
-        autoPlay
         muted
-        loop
         playsInline
-        preload="metadata"
+        preload="auto"
       />
       <div className="hero-media-shade" />
     </div>
