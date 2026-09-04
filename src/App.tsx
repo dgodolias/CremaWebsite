@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   ArrowUpRight,
   AtSign,
@@ -14,46 +15,39 @@ import {
   ShoppingBag,
   Star,
 } from 'lucide-react'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import Lenis from 'lenis'
 import clsx from 'clsx'
-import { greekContent, supportedLanguages, type LanguageCode } from './content'
+import { greekContent, supportedLanguages } from './content'
+import type { LanguageCode } from './content'
 
 const baseUrl = import.meta.env.BASE_URL
 const asset = (name: string) => `${baseUrl}assets/sourced/${name}`
 const generatedAsset = (name: string) => `${baseUrl}assets/generated/${name}`
-const heroPoster = asset('dimello-coffee.jpg')
-const heroSequenceFrameCount = 120
-const heroSequenceFrame = (frame: number) =>
-  generatedAsset(`hero-sequence/frame-${String(frame).padStart(3, '0')}.webp`)
-const brandLogo = generatedAsset('crema-logo-trimmed.png')
+const heroPoster = asset('crema-scroll-cover.avif')
+const brandLogo = generatedAsset('crema-logo-optimized.webp')
 const provioLogo = asset('provio-logo-reference.png')
 
 const signatureImages = [
-  asset('dimello-coffee.jpg'),
-  asset('crema-oat-bar-strawberry.jpg'),
-  asset('crema-arabic-wrap-wolt.jpg'),
-  asset('crema-club-xl-wolt.jpg'),
+  heroPoster,
+  asset('crema-oat-bar-strawberry.avif'),
+  asset('crema-arabic-wrap-wolt.avif'),
+  asset('crema-club-xl-wolt.avif'),
 ]
 
 const gallery = [
-  asset('dimello-coffee.jpg'),
-  asset('crema-oat-bar-strawberry.jpg'),
-  asset('crema-arabic-wrap-wolt.jpg'),
-  asset('crema-club-xl-wolt.jpg'),
-  asset('crema-ice-cream-wolt.jpg'),
-  asset('provio-amarena-wolt.jpg'),
-  asset('crema-dessert-19.jpg'),
-  asset('crema-dessert-20.jpg'),
+  heroPoster,
+  asset('crema-oat-bar-strawberry.avif'),
+  asset('crema-arabic-wrap-wolt.avif'),
+  asset('crema-club-xl-wolt.avif'),
+  asset('crema-ice-cream-wolt.avif'),
+  asset('provio-amarena-wolt.avif'),
 ]
 
 const productImages = [
-  asset('dimello-coffee.jpg'),
-  asset('crema-oat-bar-strawberry.jpg'),
-  asset('crema-arabic-wrap-wolt.jpg'),
-  asset('crema-club-xl-wolt.jpg'),
-  asset('provio-amarena-wolt.jpg'),
+  heroPoster,
+  asset('crema-oat-bar-strawberry.avif'),
+  asset('crema-arabic-wrap-wolt.avif'),
+  asset('crema-club-xl-wolt.avif'),
+  asset('provio-amarena-wolt.avif'),
 ]
 
 const navTargets = ['story', 'signatures', 'gazi', 'delivery']
@@ -107,22 +101,12 @@ function MagneticLink({
   children: ReactNode
   variant?: 'primary' | 'secondary'
 }) {
-  const ref = useRef<HTMLAnchorElement>(null)
-
   return (
     <a
-      ref={ref}
       href={href}
       className={clsx('magnetic-link', `magnetic-link-${variant}`)}
       target={href.startsWith('http') ? '_blank' : undefined}
       rel={href.startsWith('http') ? 'noreferrer' : undefined}
-      onPointerMove={(event) => {
-        const el = ref.current
-        if (!el) return
-        const rect = el.getBoundingClientRect()
-        el.style.setProperty('--mx', `${event.clientX - rect.left}px`)
-        el.style.setProperty('--my', `${event.clientY - rect.top}px`)
-      }}
     >
       {children}
     </a>
@@ -239,12 +223,17 @@ function GoogleTranslateBridge({
   onStateChange: (state: TranslationState) => void
 }) {
   useEffect(() => {
+    if (language === 'el') {
+      onStateChange('idle')
+      return
+    }
+
     const initWidget = () => {
       const host = document.getElementById('google_translate_element')
       const TranslateElement = window.google?.translate?.TranslateElement
       if (!host || !TranslateElement) return
       if (host.dataset.ready === 'true') {
-        onStateChange(language === 'el' ? 'idle' : 'ready')
+        onStateChange('ready')
         return
       }
 
@@ -259,7 +248,7 @@ function GoogleTranslateBridge({
           'google_translate_element',
         )
         host.dataset.ready = 'true'
-        onStateChange(language === 'el' ? 'idle' : 'ready')
+        onStateChange('ready')
       } catch {
         onStateChange('error')
       }
@@ -278,9 +267,7 @@ function GoogleTranslateBridge({
       script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'
       script.async = true
       script.onerror = () => {
-        if (language !== 'el') {
-          onStateChange('error')
-        }
+        onStateChange('error')
       }
       document.head.appendChild(script)
     }
@@ -296,97 +283,13 @@ function GoogleTranslateBridge({
 function HeroScrollMedia() {
   return (
     <div className="hero-media" aria-hidden="true">
-      <img className="hero-poster" src={heroPoster} alt="" />
-      <canvas className="hero-sequence-canvas" data-frame="0" />
+      <img className="hero-poster" src={heroPoster} alt="" decoding="async" fetchPriority="high" />
       <div className="hero-media-shade" />
     </div>
   )
 }
 
-function CustomCursor() {
-  const cursorRef = useRef<HTMLDivElement>(null)
-  const dotRef = useRef<HTMLSpanElement>(null)
-  const ringRef = useRef<HTMLSpanElement>(null)
-
-  useEffect(() => {
-    const supportsCursor = window.matchMedia('(hover: hover) and (pointer: fine)').matches
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    const cursor = cursorRef.current
-    const dot = dotRef.current
-    const ring = ringRef.current
-
-    if (!supportsCursor || reduceMotion || !cursor || !dot || !ring) return
-
-    let rafId = 0
-    let targetX = window.innerWidth / 2
-    let targetY = window.innerHeight / 2
-    let ringX = targetX
-    let ringY = targetY
-
-    document.body.classList.add('has-custom-cursor')
-    cursor.classList.add('is-enabled')
-
-    const paint = () => {
-      ringX += (targetX - ringX) * 0.22
-      ringY += (targetY - ringY) * 0.22
-      dot.style.transform = `translate3d(${targetX}px, ${targetY}px, 0) translate(-50%, -50%)`
-      ring.style.transform = `translate3d(${ringX}px, ${ringY}px, 0) translate(-50%, -50%)`
-      rafId = requestAnimationFrame(paint)
-    }
-
-    const setInteractiveState = (target: EventTarget | null) => {
-      const element = target instanceof Element ? target : null
-      const isInteractive = Boolean(
-        element?.closest('a, button, input, textarea, select, iframe, [role="button"], [role="option"]'),
-      )
-      cursor.classList.toggle('is-interactive', isInteractive)
-    }
-
-    const onPointerMove = (event: PointerEvent) => {
-      targetX = event.clientX
-      targetY = event.clientY
-      cursor.classList.add('is-visible')
-      setInteractiveState(event.target)
-    }
-
-    const onPointerLeave = () => {
-      cursor.classList.remove('is-visible')
-    }
-
-    const onPointerDown = () => {
-      cursor.classList.add('is-pressed')
-    }
-
-    const onPointerUp = () => {
-      cursor.classList.remove('is-pressed')
-    }
-
-    rafId = requestAnimationFrame(paint)
-    window.addEventListener('pointermove', onPointerMove, { passive: true })
-    document.addEventListener('pointerleave', onPointerLeave)
-    document.addEventListener('pointerdown', onPointerDown, { passive: true })
-    document.addEventListener('pointerup', onPointerUp, { passive: true })
-
-    return () => {
-      document.body.classList.remove('has-custom-cursor')
-      cancelAnimationFrame(rafId)
-      window.removeEventListener('pointermove', onPointerMove)
-      document.removeEventListener('pointerleave', onPointerLeave)
-      document.removeEventListener('pointerdown', onPointerDown)
-      document.removeEventListener('pointerup', onPointerUp)
-    }
-  }, [])
-
-  return (
-    <div className="custom-cursor" ref={cursorRef} aria-hidden="true">
-      <span className="custom-cursor-ring" ref={ringRef} />
-      <span className="custom-cursor-dot" ref={dotRef} />
-    </div>
-  )
-}
-
 function App() {
-  const rootRef = useRef<HTMLDivElement>(null)
   const [language, setLanguage] = useState<LanguageCode>(getInitialLanguage)
   const [translationState, setTranslationState] = useState<TranslationState>('idle')
   const content = greekContent
@@ -407,395 +310,15 @@ function App() {
     window.setTimeout(() => window.location.reload(), 80)
   }
 
-  useEffect(() => {
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduceMotion || !rootRef.current) return
-
-    gsap.registerPlugin(ScrollTrigger)
-
-    const lenis = new Lenis({
-      lerp: 0.08,
-      wheelMultiplier: 0.8,
-      touchMultiplier: 1.1,
-    })
-    lenis.on('scroll', ScrollTrigger.update)
-
-    let rafId = 0
-    const raf = (time: number) => {
-      lenis.raf(time)
-      rafId = requestAnimationFrame(raf)
-    }
-    rafId = requestAnimationFrame(raf)
-
-    let cleanupHeroSequence: (() => void) | undefined
-    let heroSequenceRaf = 0
-
-    const context = gsap.context(() => {
-      gsap.set('.reveal-line', { yPercent: 112, rotate: 2 })
-      gsap.set('.story-section', { opacity: 0, y: 64 })
-      gsap.set(rootRef.current, {
-        '--hero-scroll-darken': 0,
-        '--sequence-canvas-opacity': 0.94,
-        '--sequence-shade-opacity': 1,
-        '--sequence-image-scale': 1.045,
-      })
-      gsap.to('.reveal-line', {
-        yPercent: 0,
-        rotate: 0,
-        duration: 1.25,
-        stagger: 0.1,
-        ease: 'power4.out',
-      })
-
-      gsap.from(rootRef.current, {
-        '--sequence-image-scale': 1.075,
-        duration: 1.5,
-        ease: 'power3.out',
-      })
-
-      gsap.from('.hero-delivery-chip', {
-        y: 34,
-        opacity: 0,
-        scale: 0.9,
-        duration: 1,
-        ease: 'power3.out',
-        delay: 0.35,
-      })
-
-      gsap.to('.scroll-progress', {
-        scaleX: 1,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: document.documentElement,
-          start: 'top top',
-          end: 'bottom bottom',
-          scrub: 0.2,
-        },
-      })
-
-      gsap.utils.toArray<HTMLElement>('[data-float]').forEach((el) => {
-        const depth = Number(el.dataset.float ?? 1)
-        gsap.to(el, {
-          y: -80 * depth,
-          rotate: depth * 2,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: '.hero',
-            start: 'top top',
-            end: 'bottom top',
-            scrub: true,
-          },
-        })
-      })
-
-      const heroCanvas = document.querySelector<HTMLCanvasElement>('.hero-sequence-canvas')
-      const heroMedia = document.querySelector<HTMLElement>('.hero-media')
-      const heroContext = heroCanvas?.getContext('2d', { alpha: false })
-      const heroFrames: Array<HTMLImageElement | undefined> = []
-      let activeHeroFrame = -1
-      let targetHeroFrame = 0
-      let targetHeroFrameProgress = 0
-      let heroPreloadTimer = 0
-      let heroPreloadCursor = 1
-      let heroSequenceCancelled = false
-      const heroInitialPreloadCount = 12
-
-      const getHeroCanvasSize = () => ({
-        width: Math.max(1, heroMedia?.clientWidth || heroCanvas?.offsetWidth || window.innerWidth),
-        height: Math.max(1, heroMedia?.clientHeight || heroCanvas?.offsetHeight || window.innerHeight),
-      })
-
-      const paintCoverFrame = (image: HTMLImageElement) => {
-        if (!heroCanvas || !heroContext || !image.naturalWidth || !image.naturalHeight) return
-
-        const canvasSize = getHeroCanvasSize()
-        const scale = Math.max(canvasSize.width / image.naturalWidth, canvasSize.height / image.naturalHeight)
-        const width = image.naturalWidth * scale
-        const height = image.naturalHeight * scale
-        const x = (canvasSize.width - width) / 2
-        const y = (canvasSize.height - height) / 2
-
-        heroContext.drawImage(image, x, y, width, height)
-      }
-
-      const drawHeroFrame = (frameProgress: number, force = false) => {
-        if (!heroCanvas || !heroContext || !heroMedia) return
-
-        const clampedProgress = Math.min(heroSequenceFrameCount - 1, Math.max(0, frameProgress))
-        const lowerFrameIndex = Math.floor(clampedProgress)
-        const upperFrameIndex = Math.min(heroSequenceFrameCount - 1, lowerFrameIndex + 1)
-        const mix = clampedProgress - lowerFrameIndex
-        const lowerFrame = heroFrames[lowerFrameIndex]
-        const upperFrame = heroFrames[upperFrameIndex]
-
-        if (!lowerFrame?.complete || !lowerFrame.naturalWidth) return
-        if (mix > 0 && (!upperFrame?.complete || !upperFrame.naturalWidth)) return
-        if (!force && Math.abs(activeHeroFrame - clampedProgress) < 0.001) return
-
-        const canvasSize = getHeroCanvasSize()
-        heroContext.globalAlpha = 1
-        heroContext.clearRect(0, 0, canvasSize.width, canvasSize.height)
-        paintCoverFrame(lowerFrame)
-
-        if (mix > 0 && upperFrame?.complete && upperFrame.naturalWidth) {
-          heroContext.globalAlpha = mix
-          paintCoverFrame(upperFrame)
-          heroContext.globalAlpha = 1
-        }
-
-        activeHeroFrame = clampedProgress
-        heroCanvas.dataset.frame = String(Math.round(clampedProgress))
-        heroCanvas.dataset.frameProgress = clampedProgress.toFixed(3)
-        heroMedia.classList.add('is-canvas-ready')
-      }
-
-      const loadHeroFrame = (frameIndex: number) => {
-        if (heroFrames[frameIndex]) return heroFrames[frameIndex]
-
-        const image = new Image()
-        image.decoding = 'async'
-        ;(image as HTMLImageElement & { fetchPriority?: string }).fetchPriority = frameIndex < heroInitialPreloadCount ? 'high' : 'low'
-        image.src = heroSequenceFrame(frameIndex + 1)
-        image.onload = () => {
-          if (heroSequenceCancelled) return
-          if (
-            frameIndex === Math.floor(targetHeroFrameProgress) ||
-            frameIndex === Math.ceil(targetHeroFrameProgress) ||
-            activeHeroFrame === -1
-          ) {
-            drawHeroFrame(activeHeroFrame === -1 ? frameIndex : targetHeroFrameProgress, true)
-          }
-        }
-        heroFrames[frameIndex] = image
-        return image
-      }
-
-      const resizeHeroCanvas = () => {
-        if (!heroCanvas || !heroContext) return
-
-        const canvasSize = getHeroCanvasSize()
-        const dpr = Math.min(window.devicePixelRatio || 1, 2)
-        const width = Math.max(1, Math.round(canvasSize.width * dpr))
-        const height = Math.max(1, Math.round(canvasSize.height * dpr))
-
-        if (heroCanvas.width !== width || heroCanvas.height !== height) {
-          heroCanvas.width = width
-          heroCanvas.height = height
-        }
-
-        heroContext.setTransform(dpr, 0, 0, dpr, 0, 0)
-        drawHeroFrame(activeHeroFrame >= 0 ? activeHeroFrame : 0, true)
-      }
-
-      const queueHeroFrame = (progress: number) => {
-        targetHeroFrameProgress = Math.min(heroSequenceFrameCount - 1, Math.max(0, progress * (heroSequenceFrameCount - 1)))
-        targetHeroFrame = Math.round(targetHeroFrameProgress)
-
-        if (!heroSequenceRaf) {
-          heroSequenceRaf = requestAnimationFrame(() => {
-            heroSequenceRaf = 0
-            loadHeroFrame(Math.floor(targetHeroFrameProgress))
-            loadHeroFrame(Math.ceil(targetHeroFrameProgress))
-            drawHeroFrame(targetHeroFrameProgress)
-
-            for (let offset = 1; offset <= 5; offset += 1) {
-              if (targetHeroFrame + offset < heroSequenceFrameCount) loadHeroFrame(targetHeroFrame + offset)
-              if (targetHeroFrame - offset >= 0) loadHeroFrame(targetHeroFrame - offset)
-            }
-          })
-        }
-      }
-
-      const preloadHeroFrames = () => {
-        if (heroSequenceCancelled) return
-
-        const batchSize = heroPreloadCursor < 18 ? 2 : 1
-        for (let count = 0; count < batchSize && heroPreloadCursor < heroSequenceFrameCount; count += 1) {
-          loadHeroFrame(heroPreloadCursor)
-          heroPreloadCursor += 1
-        }
-
-        if (heroPreloadCursor < heroSequenceFrameCount) {
-          heroPreloadTimer = window.setTimeout(preloadHeroFrames, heroPreloadCursor < 18 ? 120 : 190)
-        }
-      }
-
-      for (let frameIndex = 0; frameIndex < heroInitialPreloadCount; frameIndex += 1) {
-        loadHeroFrame(frameIndex)
-      }
-      heroPreloadCursor = heroInitialPreloadCount
-      resizeHeroCanvas()
-      heroPreloadTimer = window.setTimeout(preloadHeroFrames, 240)
-      window.addEventListener('resize', resizeHeroCanvas)
-
-      const sequenceFrameForRange = (progress: number, startFrame: number, endFrame: number) =>
-        startFrame + Math.min(1, Math.max(0, progress)) * (endFrame - startFrame)
-
-      const revealThenFadeDarken = (progress: number) => {
-        const clamped = Math.min(1, Math.max(0, progress))
-        if (clamped < 0.42) return 0.92 - (clamped / 0.42) * 0.56
-        if (clamped > 0.82) return 0.36 + ((clamped - 0.82) / 0.18) * 0.48
-        return 0.36
-      }
-
-      const sequenceTriggers = [
-        ScrollTrigger.create({
-          trigger: '.hero',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: true,
-          onUpdate: (self) => {
-            queueHeroFrame(sequenceFrameForRange(self.progress, 0, 45) / (heroSequenceFrameCount - 1))
-            gsap.set(rootRef.current, {
-              '--hero-scroll-darken': self.progress * 0.8,
-              '--sequence-canvas-opacity': 0.94,
-              '--sequence-shade-opacity': 1,
-              '--sequence-image-scale': 1.045 + self.progress * 0.035,
-            })
-          },
-        }),
-        ScrollTrigger.create({
-          trigger: '.signature-section',
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: true,
-          onUpdate: (self) => {
-            queueHeroFrame(sequenceFrameForRange(self.progress, 45, 84) / (heroSequenceFrameCount - 1))
-            gsap.set(rootRef.current, {
-              '--hero-scroll-darken': revealThenFadeDarken(self.progress),
-              '--sequence-canvas-opacity': 0.9,
-              '--sequence-shade-opacity': 0.82,
-              '--sequence-image-scale': 1.08,
-            })
-          },
-        }),
-        ScrollTrigger.create({
-          trigger: '.delivery-section',
-          start: 'top bottom',
-          end: 'bottom top',
-          scrub: true,
-          onUpdate: (self) => {
-            queueHeroFrame(sequenceFrameForRange(self.progress, 84, heroSequenceFrameCount - 1) / (heroSequenceFrameCount - 1))
-            gsap.set(rootRef.current, {
-              '--hero-scroll-darken': revealThenFadeDarken(self.progress),
-              '--sequence-canvas-opacity': 0.88,
-              '--sequence-shade-opacity': 0.74,
-              '--sequence-image-scale': 1.08,
-            })
-          },
-        }),
-      ]
-
-      const resetSequenceTrigger = ScrollTrigger.create({
-        trigger: '.hero',
-        start: 'top top',
-        end: 'bottom top',
-        scrub: true,
-        onLeaveBack: () => {
-          queueHeroFrame(0)
-          gsap.set(rootRef.current, {
-            '--hero-scroll-darken': 0,
-            '--sequence-canvas-opacity': 0.94,
-            '--sequence-shade-opacity': 1,
-            '--sequence-image-scale': 1.045,
-          })
-        },
-      })
-
-      cleanupHeroSequence = () => {
-        heroSequenceCancelled = true
-        cancelAnimationFrame(heroSequenceRaf)
-        window.clearTimeout(heroPreloadTimer)
-        window.removeEventListener('resize', resizeHeroCanvas)
-        sequenceTriggers.forEach((trigger) => trigger.kill())
-        resetSequenceTrigger.kill()
-      }
-
-      gsap.to('.hero-copy', {
-        y: -36,
-        opacity: 0.36,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.hero',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: true,
-        },
-      })
-
-      gsap.to('.story-section', {
-        opacity: 1,
-        y: 0,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.story-section',
-          start: 'top 92%',
-          end: 'top 68%',
-          scrub: true,
-        },
-      })
-
-      gsap.utils.toArray<HTMLElement>('.image-reveal').forEach((el) => {
-        gsap.fromTo(
-          el,
-          { clipPath: 'inset(16% 12% 16% 12%)', scale: 1.08 },
-          {
-            clipPath: 'inset(0% 0% 0% 0%)',
-            scale: 1,
-            duration: 1.2,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: el,
-              start: 'top 82%',
-            },
-          },
-        )
-      })
-
-      gsap.utils.toArray<HTMLElement>('.section-copy').forEach((el) => {
-        gsap.from(el, {
-          y: 42,
-          opacity: 0,
-          duration: 0.9,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 78%',
-          },
-        })
-      })
-
-    }, rootRef)
-
-    const onPointerMove = (event: PointerEvent) => {
-      const x = event.clientX / window.innerWidth - 0.5
-      const y = event.clientY / window.innerHeight - 0.5
-      rootRef.current?.style.setProperty('--pointer-x', x.toFixed(3))
-      rootRef.current?.style.setProperty('--pointer-y', y.toFixed(3))
-    }
-
-    window.addEventListener('pointermove', onPointerMove)
-
-    return () => {
-      window.removeEventListener('pointermove', onPointerMove)
-      cancelAnimationFrame(rafId)
-      cancelAnimationFrame(heroSequenceRaf)
-      cleanupHeroSequence?.()
-      lenis.destroy()
-      context.revert()
-    }
-  }, [])
 
   return (
-    <div className="site-shell" ref={rootRef}>
-      <div className="scroll-progress" />
+    <div className="site-shell">
       <HeroScrollMedia />
       <GoogleTranslateBridge language={language} onStateChange={setTranslationState} />
-      <CustomCursor />
 
       <header className="topbar">
         <a className="brand-lockup" href="#top" aria-label="Crema Gazi home">
-          <img className="brand-logo" src={brandLogo} alt="" />
+          <img className="brand-logo" src={brandLogo} alt="" width="400" height="342" decoding="async" fetchPriority="high" />
         </a>
         <nav className="desktop-nav" aria-label="Primary navigation">
           {content.nav.map((item, index) => (
@@ -861,7 +384,7 @@ function App() {
             </div>
           </div>
 
-          <div className="delivery-chip hero-delivery-chip" data-float="0.8" aria-hidden="true">
+          <div className="delivery-chip hero-delivery-chip" aria-hidden="true">
             <Bike size={20} />
             <span>{content.hero.location}</span>
           </div>
@@ -875,20 +398,17 @@ function App() {
 
         <section className="marquee-band" aria-label="Crema signature categories">
           <div className="marquee-track">
-            {Array.from({ length: 2 }).map((_, group) => (
-              <div className="marquee-group" key={group}>
-                <span>{content.marquee[0]}</span>
-                <Star size={18} />
-                <span>{content.marquee[1]}</span>
-                <Star size={18} />
-                <span>{content.marquee[2]}</span>
-                <Star size={18} />
-                <span>{content.marquee[3]}</span>
-                <Star size={18} />
-                <span>{content.marquee[4]}</span>
-                <Star size={18} />
-              </div>
-            ))}
+            <div className="marquee-group">
+              <span>{content.marquee[0]}</span>
+              <Star size={18} />
+              <span>{content.marquee[1]}</span>
+              <Star size={18} />
+              <span>{content.marquee[2]}</span>
+              <Star size={18} />
+              <span>{content.marquee[3]}</span>
+              <Star size={18} />
+              <span>{content.marquee[4]}</span>
+            </div>
           </div>
         </section>
 
@@ -902,7 +422,7 @@ function App() {
             <p>{content.story.body}</p>
           </div>
           <div className="story-visual image-reveal">
-            <img className="story-logo" src={brandLogo} alt={content.story.logoAlt} />
+            <img className="story-logo" src={brandLogo} alt={content.story.logoAlt} width="400" height="342" loading="lazy" decoding="async" />
             <div>
               <span>{content.story.visualMain}</span>
               <strong>{content.story.visualSub}</strong>
@@ -923,7 +443,7 @@ function App() {
             {content.signatures.items.map((item, index) => (
               <article className="signature-card image-reveal" key={item.title}>
                 <span>{String(index + 1).padStart(2, '0')}</span>
-                <img src={signatureImages[index]} alt="" />
+                <img src={signatureImages[index]} alt="" width="960" height="540" loading="lazy" decoding="async" />
                 <div>
                   <h3>{item.title}</h3>
                   <p>{item.detail}</p>
@@ -945,7 +465,7 @@ function App() {
           <div className="products-rail">
             {content.products.items.map((item, index) => (
               <article className="product-card image-reveal" key={item.name}>
-                <img src={productImages[index]} alt="" loading="lazy" />
+                <img src={productImages[index]} alt="" width="960" height="540" loading="lazy" decoding="async" />
                 <div className="product-card-copy">
                   <span>{String(index + 1).padStart(2, '0')}</span>
                   <h3>{item.name}</h3>
@@ -962,7 +482,7 @@ function App() {
 
         <section className="provio-spotlight" aria-labelledby="provio-title">
           <div className="provio-mark image-reveal">
-            <img src={provioLogo} alt={content.provio.logoAlt} loading="lazy" />
+            <img src={provioLogo} alt={content.provio.logoAlt} width="150" height="151" loading="lazy" decoding="async" />
           </div>
           <div className="provio-copy section-copy">
             <p className="eyebrow">
@@ -977,7 +497,7 @@ function App() {
         <section className="gallery-section" aria-label="Crema product gallery">
           {gallery.map((src, index) => (
             <figure className="gallery-tile image-reveal" key={src}>
-              <img src={src} alt={`${content.galleryAlt} ${index + 1}`} loading="lazy" />
+              <img src={src} alt={`${content.galleryAlt} ${index + 1}`} width="960" height="540" loading="lazy" decoding="async" />
             </figure>
           ))}
         </section>

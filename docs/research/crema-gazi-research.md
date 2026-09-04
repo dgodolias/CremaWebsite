@@ -35,13 +35,12 @@ Date: 2026-06-13
 
 ## Assets Collected
 
-Local candidates are stored under `public/assets/sourced/`.
+Only the optimized production set remains under `public/assets/sourced/`; source URLs are preserved in `SOURCES.md`.
 
-- `crema-instagram-profile.jpg`: Instagram profile image, used as brand reference/logo candidate.
-- Wolt CDN product images: coffee, pastry, dessert shots on marble background.
-- `crema-cover.jpg`: SE MENY cover photo, authentic but dark/provio-heavy, not preferred for hero.
-- `crema-brand-large.jpg`: SE MENY large image, visually clean but appears generic/stock, not preferred for authenticity.
-- `public/assets/generated/crema-logo-transparent.png`: clean AI-generated logo asset inspired by the public Instagram profile mark, used as a polished placeholder until the owner provides official vector artwork.
+- Authentic Wolt/e-food product images were converted to compact AVIF files after download.
+- The Dimello hero was converted to a compact AVIF file from Kafea Terra photography.
+- The clean Crema logo treatment is deployed as an optimized WebP plus a small PNG favicon.
+- Original downloads and unused visual candidates were removed from the public bundle after provenance was recorded.
 
 ## Premium Cafe/Restaurant Design Research
 

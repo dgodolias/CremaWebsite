@@ -30,13 +30,13 @@ Success means all five offers are visible on desktop and mobile, no visible or d
 
 ## Visual and expression direction
 
-Preserve the established Crema charcoal, cream, green and orange palette, handwritten logo energy, high-contrast editorial type and photo-led cards. Replace the hero with an authentic Dimello photograph and keep the existing scroll-scrub treatment with the same safe poster and reduced-motion behavior.
+Preserve the established Crema charcoal, cream, green and orange palette, handwritten logo energy, high-contrast editorial type and photo-led cards. Use an authentic Dimello photograph as a static hero so scrolling remains immediate even on modest phones.
 
-Selected expression: `Balanced`; selected amplifiers are X02 signature imagery and X05 cinematic/scroll storytelling. Their fallbacks are the poster image and `prefers-reduced-motion` static state.
+Selected expression: `Balanced`; the selected amplifier is X02 signature imagery. Continuous scroll-scrub, custom-cursor and marquee animation are excluded to protect runtime performance.
 
 ## Trigger register
 
-- **C07 / C08 / D08 / O08:** Active for product images, hero media and scroll animation.
+- **C07 / C08 / D08 / O08:** Active for product images and static hero media.
 - **M01:** `N/A-D`; this homepage links to external ordering and does not collect a cart, price commitment or payment.
 - **M02–M12, C09, D07, D09–D11:** `N/A-D` for this static marketing release; reassess if local ordering, live data, personalization or social features are added.
 
@@ -44,6 +44,7 @@ Selected expression: `Balanced`; selected amplifiers are X02 signature imagery a
 
 - Store image origin and generation prompts in `public/assets/sourced/SOURCES.md`.
 - Preserve accessible image alternatives and use lazy loading for non-hero images.
+- Serve compact AVIF/WebP assets, defer translation until requested, and render below-fold sections on demand.
 - Update tests to assert required labels and absence of pastry/Illy copy.
 - Verify with `npm run lint`, `npm run build`, Playwright desktop/mobile, and visual review for crop, overflow, contrast and reduced motion.
 - Definition of done: all required brand/category checks pass; no open P0/P1 issue; no unsupported price/brand claim; all changed product assets have provenance.
