@@ -628,7 +628,7 @@ h1 {
 .order-option {
   display: grid;
   min-height: 58px;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
   align-items: center;
   gap: 11px;
   border-radius: 7px;
@@ -647,24 +647,29 @@ h1 {
 
 .order-platform-mark {
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 64px;
+  height: 40px;
   place-items: center;
   border: 1px solid rgba(255, 253, 247, 0.18);
-  border-radius: 50%;
-  color: var(--ink);
-  background: var(--green);
-  font-size: 0.64rem;
-  font-weight: 950;
+  border-radius: 8px;
+  padding: 6px;
+  background: var(--white);
 }
 
 .order-platform-mark.is-box {
-  background: var(--orange);
+  padding: 4px 16px;
 }
 
 .order-platform-mark.is-wolt {
-  color: var(--white);
-  background: #169ddb;
+  padding: 5px;
+  background: #72c8d5;
+}
+
+.order-platform-logo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .order-platform-copy {

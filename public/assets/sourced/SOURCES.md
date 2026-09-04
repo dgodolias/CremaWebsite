@@ -11,6 +11,9 @@ The deployed product-card photography is authentic menu/vendor photography. No n
 - `crema-arabic-wrap-wolt.avif`: optimized derivative of the Arabic pita menu image from Wolt, `https://imageproxy.wolt.com/menu/menu-images/601d640fa9eedbe434d53a3e/cda4b24e-49ca-11ef-a2b2-cea210988a4a_15zpe3mnf89ql_xegrm1uiqnyc27idddt.jpg`.
 - `provio-amarena-wolt.avif`: optimized derivative of an authentic branded Provio ice-cream pack served by Wolt, `https://imageproxy.wolt.com/menu/menu-images/shared/28e47ccc-4851-11f0-a3d3-56821e4d896b_5.jpg`.
 - `provio-logo-reference.png`: official Provio logo from `https://provio.gr/`.
+- `efood-logo-official.svg`: official e-food logo served by `https://www.e-food.gr/site-assets/img/efood/logo.svg`.
+- `box-logo-official.svg`: official BOX logo served by `https://box.gr/assets/images/logo/box-unpacked-logo-new.svg`.
+- `wolt-logo-official.png`: official Wolt pill logo served by Wolt's Contentful media at `https://images.ctfassets.net/23u853certza/2djO9HWVlB8lG3mzwmNMiX/ca7dcf7d95dcffb1868d5594cd01c447/Wolt__pill_logo.png`.
 - `crema-waffle-wolt.avif`: My Waffle, `https://imageproxy.wolt.com/menu/menu-images/601d640fa9eedbe434d53a3e/03388e16-69f6-11eb-a064-3ecc54845761____23_.jpeg`.
 - `crema-caesar-wolt.avif`: Caesar's salad, `https://imageproxy.wolt.com/menu/menu-images/601d640fa9eedbe434d53a3e/fb487dde-69f4-11eb-9e71-6e809053abfb____3_.jpeg`.
 - `crema-banoffee-wolt.avif`: Banoffee, `https://imageproxy.wolt.com/menu/menu-images/601d640fa9eedbe434d53a3e/9d0470d8-69f5-11eb-9ac2-a6ebaf50d28f____14_.jpeg`.

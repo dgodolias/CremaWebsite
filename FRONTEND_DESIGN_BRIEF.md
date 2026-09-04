@@ -30,7 +30,7 @@ Success means all five requested offers are visible on desktop and mobile, the s
 - **Source of truth:** Crema menus on e-food, Wolt and BOX; official Dimello and Provio assets. Prices are shown only where verified on the checked menu.
 - **Photo policy:** Food must be shown only with authentic menu/vendor photography. No AI-generated or composited food imagery is allowed.
 - **Photo variety:** Each of the 16 product photographs used across recommendations, expanded-menu cards, Provio and gallery appears once; no food image repeats between those sections.
-- **Ordering disclosure:** One hero `Παραγγελία` control reveals e-food, BOX and Wolt links; it closes on selection, outside press or Escape and returns focus after keyboard dismissal.
+- **Ordering disclosure:** One hero `Παραγγελία` control reveals e-food, BOX and Wolt links with locally served official platform logos; it closes on selection, outside press or Escape and returns focus after keyboard dismissal.
 
 ## Visual and expression direction
 

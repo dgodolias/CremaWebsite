@@ -33,9 +33,9 @@ const heroImageMaxBlur = 4.5
 const heroImageSmoothingTimeConstant = 85
 const heroImageSettleThreshold = 0.001
 const orderPlatforms = [
-  { id: 'efood', label: 'e-food', href: 'https://www.e-food.gr/delivery/menu/crema' },
-  { id: 'box', label: 'BOX', href: 'https://box.gr/delivery/gkazi/crema-gkazi' },
-  { id: 'wolt', label: 'Wolt', href: 'https://wolt.com/el/grc/athens/restaurant/crema' },
+  { id: 'efood', label: 'e-food', href: 'https://www.e-food.gr/delivery/menu/crema', logo: asset('efood-logo-official.svg') },
+  { id: 'box', label: 'BOX', href: 'https://box.gr/delivery/gkazi/crema-gkazi', logo: asset('box-logo-official.svg') },
+  { id: 'wolt', label: 'Wolt', href: 'https://wolt.com/el/grc/athens/restaurant/crema', logo: asset('wolt-logo-official.png') },
 ] as const
 
 const signatureImages = [
@@ -172,7 +172,7 @@ function OrderMenu({ label }: { label: string }) {
 
       {isOpen && (
         <div className="order-panel" id="hero-order-options">
-          {orderPlatforms.map((platform, index) => (
+          {orderPlatforms.map((platform) => (
             <a
               className="order-option"
               data-platform={platform.id}
@@ -183,7 +183,7 @@ function OrderMenu({ label }: { label: string }) {
               onClick={() => setIsOpen(false)}
             >
               <span className={clsx('order-platform-mark', `is-${platform.id}`)} aria-hidden="true">
-                {String(index + 1).padStart(2, '0')}
+                <img className="order-platform-logo" src={platform.logo} alt="" width="64" height="40" decoding="async" />
               </span>
               <span className="order-platform-copy">
                 <strong>{platform.label}</strong>

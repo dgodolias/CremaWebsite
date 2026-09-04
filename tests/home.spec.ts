@@ -114,9 +114,16 @@ test('order dropdown exposes e-food, BOX and Wolt with keyboard dismissal', asyn
   const panel = page.locator('.order-panel')
   await expect(panel).toBeVisible()
   await expect(panel.locator('.order-option')).toHaveCount(3)
+  await expect(panel.locator('.order-platform-logo')).toHaveCount(3)
   await expect(panel.locator('[data-platform="efood"]')).toHaveAttribute('href', 'https://www.e-food.gr/delivery/menu/crema')
   await expect(panel.locator('[data-platform="box"]')).toHaveAttribute('href', 'https://box.gr/delivery/gkazi/crema-gkazi')
   await expect(panel.locator('[data-platform="wolt"]')).toHaveAttribute('href', 'https://wolt.com/el/grc/athens/restaurant/crema')
+  await expect(panel.locator('[data-platform="efood"] .order-platform-logo')).toHaveAttribute('src', /efood-logo-official\.svg/)
+  await expect(panel.locator('[data-platform="box"] .order-platform-logo')).toHaveAttribute('src', /box-logo-official\.svg/)
+  await expect(panel.locator('[data-platform="wolt"] .order-platform-logo')).toHaveAttribute('src', /wolt-logo-official\.png/)
+  expect(
+    await panel.locator('.order-platform-logo').evaluateAll((logos) => logos.every((logo) => (logo as HTMLImageElement).naturalWidth > 0)),
+  ).toBe(true)
 
   await page.keyboard.press('Escape')
   await expect(panel).toHaveCount(0)
