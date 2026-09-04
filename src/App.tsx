@@ -23,37 +23,37 @@ import { greekContent, supportedLanguages, type LanguageCode } from './content'
 const baseUrl = import.meta.env.BASE_URL
 const asset = (name: string) => `${baseUrl}assets/sourced/${name}`
 const generatedAsset = (name: string) => `${baseUrl}assets/generated/${name}`
-const heroPoster = asset('crema-scroll-cover.avif')
+const heroPoster = asset('dimello-coffee.jpg')
 const heroSequenceFrameCount = 120
 const heroSequenceFrame = (frame: number) =>
   generatedAsset(`hero-sequence/frame-${String(frame).padStart(3, '0')}.webp`)
 const brandLogo = generatedAsset('crema-logo-trimmed.png')
+const provioLogo = asset('provio-logo-reference.png')
 
 const signatureImages = [
-  heroPoster,
-  asset('crema-waffle-13.jpg'),
-  asset('crema-dessert-18.jpg'),
-  asset('crema-crepe-05.jpg'),
+  asset('dimello-coffee.jpg'),
+  asset('crema-oat-bar-strawberry.jpg'),
+  asset('crema-arabic-wrap-wolt.jpg'),
+  asset('crema-club-xl-wolt.jpg'),
 ]
 
 const gallery = [
-  asset('crema-dessert-18.jpg'),
+  asset('dimello-coffee.jpg'),
+  asset('crema-oat-bar-strawberry.jpg'),
+  asset('crema-arabic-wrap-wolt.jpg'),
+  asset('crema-club-xl-wolt.jpg'),
+  asset('crema-ice-cream-wolt.jpg'),
+  asset('provio-amarena-wolt.jpg'),
   asset('crema-dessert-19.jpg'),
   asset('crema-dessert-20.jpg'),
-  asset('crema-dessert-21.jpg'),
-  asset('crema-dessert-23.jpg'),
-  asset('crema-dessert-24.jpg'),
-  asset('crema-dessert-26.jpg'),
-  asset('crema-dessert-27.jpg'),
 ]
 
 const productImages = [
-  heroPoster,
-  asset('crema-crepe-05.jpg'),
-  asset('crema-waffle-13.jpg'),
-  asset('crema-dessert-18.jpg'),
-  asset('crema-dessert-22.jpg'),
-  asset('crema-cover.jpg'),
+  asset('dimello-coffee.jpg'),
+  asset('crema-oat-bar-strawberry.jpg'),
+  asset('crema-arabic-wrap-wolt.jpg'),
+  asset('crema-club-xl-wolt.jpg'),
+  asset('provio-amarena-wolt.jpg'),
 ]
 
 const navTargets = ['story', 'signatures', 'gazi', 'delivery']
@@ -803,7 +803,7 @@ function App() {
               {item}
             </a>
           ))}
-          <a className="nav-menu-link" href="https://quar.gr/crema" target="_blank" rel="noreferrer" aria-label="Crema menu">
+          <a className="nav-menu-link" href="https://www.e-food.gr/delivery/menu/crema" target="_blank" rel="noreferrer" aria-label="Crema menu">
             <BookOpenText size={15} />
             Μενού
             <ArrowUpRight size={14} />
@@ -816,7 +816,7 @@ function App() {
             state={translationState}
             onChange={handleLanguageChange}
           />
-          <a className="icon-action menu-icon-action" href="https://quar.gr/crema" target="_blank" rel="noreferrer" aria-label="Crema menu">
+          <a className="icon-action menu-icon-action" href="https://www.e-food.gr/delivery/menu/crema" target="_blank" rel="noreferrer" aria-label="Crema menu">
             <BookOpenText size={18} />
           </a>
           <a className="icon-action" href="tel:+302103467213" aria-label={content.meta.call}>
@@ -849,7 +849,7 @@ function App() {
               {content.hero.subcopy}
             </p>
             <div className="hero-actions">
-              <MagneticLink href="https://wolt.com/en/grc/athens/restaurant/crema">
+              <MagneticLink href="https://wolt.com/el/grc/athens/restaurant/crema">
                 <ShoppingBag size={18} />
                 {content.hero.orderWolt}
                 <ArrowUpRight size={16} />
@@ -950,13 +950,27 @@ function App() {
                   <span>{String(index + 1).padStart(2, '0')}</span>
                   <h3>{item.name}</h3>
                   <p>{item.note}</p>
-                  <a href="https://wolt.com/en/grc/athens/restaurant/crema" target="_blank" rel="noreferrer">
+                  <a href="https://wolt.com/el/grc/athens/restaurant/crema" target="_blank" rel="noreferrer">
                     {content.products.cta}
                     <ArrowUpRight size={15} />
                   </a>
                 </div>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section className="provio-spotlight" aria-labelledby="provio-title">
+          <div className="provio-mark image-reveal">
+            <img src={provioLogo} alt={content.provio.logoAlt} loading="lazy" />
+          </div>
+          <div className="provio-copy section-copy">
+            <p className="eyebrow">
+              <Star size={16} />
+              {content.provio.eyebrow}
+            </p>
+            <h2 id="provio-title">{content.provio.title}</h2>
+            <p>{content.provio.body}</p>
           </div>
         </section>
 
@@ -1021,8 +1035,14 @@ function App() {
               <a href="tel:+302103467213" aria-label={content.meta.call}>
                 <Phone size={18} />
               </a>
-              <a href="https://wolt.com/en/grc/athens/restaurant/crema" target="_blank" rel="noreferrer" aria-label={content.meta.orderWolt}>
+              <a href="https://wolt.com/el/grc/athens/restaurant/crema" target="_blank" rel="noreferrer" aria-label={content.meta.orderWolt}>
                 <ShoppingBag size={18} />
+              </a>
+              <a href="https://www.e-food.gr/delivery/menu/crema" target="_blank" rel="noreferrer" aria-label={content.meta.orderEfood}>
+                <BookOpenText size={18} />
+              </a>
+              <a href="https://box.gr/delivery/gkazi/crema-gkazi" target="_blank" rel="noreferrer" aria-label={content.meta.orderBox}>
+                <Bike size={18} />
               </a>
             </div>
           </div>

@@ -6,15 +6,29 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
   await expect(page.locator('h1')).toContainText('Crema')
   await expect(page.locator('#google_translate_element')).toHaveCount(1)
   await expect(page.locator('.hero-media')).toBeVisible()
-  await expect(page.locator('.hero-poster')).toHaveAttribute('src', /crema-scroll-cover\.avif/)
+  await expect(page.locator('.hero-poster')).toHaveAttribute('src', /dimello-coffee\.jpg/)
   await expect(page.locator('.hero-sequence-canvas')).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Crema menu' })).toHaveAttribute('href', 'https://quar.gr/crema')
+  await expect(page.getByRole('link', { name: 'Crema menu' })).toHaveAttribute('href', 'https://www.e-food.gr/delivery/menu/crema')
   await expect(page.locator('.hero-actions').getByRole('link', { name: /Wolt/i })).toBeVisible()
   await expect(page.locator('.delivery-chip')).toContainText('63')
   await expect(page.locator('.location-iframe')).toHaveAttribute('src', /google\.com\/maps\/embed/)
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
   expect(overflow).toBeLessThanOrEqual(2)
+})
+
+test('featured menu reflects the requested brands and categories', async ({ page }) => {
+  await page.goto('./')
+
+  const site = page.locator('.site-shell')
+  await expect(site).toContainText('Dimello')
+  await expect(site).toContainText('Μπάρες βρώμης')
+  await expect(site).toContainText('Αραβική πίτα')
+  await expect(site).toContainText('Club Sandwich XL')
+  await expect(site).toContainText('Παγωτό Provio')
+  await expect(page.locator('.provio-spotlight')).toContainText('Μάρκα που στηρίζουμε')
+  await expect(page.locator('.provio-spotlight img')).toHaveAttribute('src', /provio-logo-reference\.png/)
+  await expect(site).not.toContainText(/Illy|σφολιάτ|croissant|pastry/i)
 })
 
 test('key sections stay reachable on mobile', async ({ page }) => {

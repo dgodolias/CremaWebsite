@@ -1,6 +1,6 @@
 # Crema Gazi Website
 
-Premium React/TypeScript/Tailwind website for Crema Gazi, a 24hr delivery coffee, crepe, waffle and pastry shop in Gazi, Athens.
+Premium React/TypeScript/Tailwind website for Crema Gazi, featuring Dimello coffee, oat bars, Arabic wraps, Club Sandwich XL and Provio ice cream in Gazi, Athens.
 
 ## Stack
 
