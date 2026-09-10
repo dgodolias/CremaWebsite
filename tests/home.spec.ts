@@ -3,20 +3,27 @@ import { expect, test } from '@playwright/test'
 test('homepage renders the Crema experience without layout overflow', async ({ page }) => {
   await page.goto('./')
 
-  await expect(page.locator('h1')).toContainText('Crema')
-  await expect(page.locator('.hero-brand-line')).toHaveText('Crema')
+  await expect(page.locator('#hero-title')).toHaveAccessibleName(/Crema/i)
+  await expect(page.locator('.hero-kickers')).toHaveCount(0)
+  await expect(page.locator('.hero-brand-line')).toHaveCount(0)
   await expect(page.locator('.hero-support-line')).toHaveCount(2)
+  await expect(page.locator('.hero-title-logo')).toBeVisible()
+  await expect(page.locator('.hero-title-logo')).toHaveAttribute('src', /crema-logo-optimized\.webp/)
 
-  const heroTypeScale = await page.locator('#hero-title').evaluate((title) => {
-    const brand = title.querySelector<HTMLElement>('.hero-brand-line')
+  const heroHierarchy = await page.locator('#hero-title').evaluate((title) => {
+    const logo = title.querySelector<HTMLImageElement>('.hero-title-logo')
     const support = title.querySelector<HTMLElement>('.hero-support-line')
+    const logoBox = logo?.getBoundingClientRect()
 
     return {
-      brand: brand ? Number.parseFloat(getComputedStyle(brand).fontSize) : 0,
+      logoHeight: logoBox?.height ?? 0,
+      logoNaturalWidth: logo?.naturalWidth ?? 0,
+      logoWidth: logoBox?.width ?? 0,
       support: support ? Number.parseFloat(getComputedStyle(support).fontSize) : 0,
     }
   })
-  expect(heroTypeScale.brand / heroTypeScale.support).toBeGreaterThan(2)
+  expect(heroHierarchy.logoNaturalWidth).toBeGreaterThan(0)
+  expect(heroHierarchy.logoWidth / heroHierarchy.support).toBeGreaterThan(6)
 
   const supportingDisplayScale = await page.evaluate(() => {
     const readFontSize = (selector: string) => {
@@ -37,8 +44,8 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
     supportingDisplayScale.provio,
     supportingDisplayScale.sectionTitle,
     supportingDisplayScale.storyStatement,
-  )).toBeLessThan(heroTypeScale.brand)
-  expect(supportingDisplayScale.marquee).toBeLessThan(heroTypeScale.support)
+  )).toBeLessThan(heroHierarchy.logoHeight)
+  expect(supportingDisplayScale.marquee).toBeLessThan(heroHierarchy.support)
   await expect(page.locator('#google_translate_element')).toHaveCount(1)
   await expect(page.locator('.hero-media')).toBeVisible()
   await expect(page.locator('.hero-poster')).toHaveAttribute('src', /crema-scroll-cover\.avif/)

@@ -7,7 +7,6 @@ import {
   BookOpenText,
   Check,
   ChevronDown,
-  Clock3,
   Coffee,
   Globe2,
   MapPin,
@@ -553,21 +552,23 @@ function App() {
         <section className="hero" aria-labelledby="hero-title">
           <div className="hero-noise" />
           <div className="hero-copy">
-            <div className="hero-kickers">
-              <p className="eyebrow">
-                <Clock3 size={16} />
-                {content.hero.eyebrow}
-              </p>
-            </div>
             <h1 className="hero-title" id="hero-title">
-              <span className="line-mask hero-brand-mask">
-                <span className="reveal-line script-word hero-brand-line">{content.hero.brand}</span>
+              <span className="hero-title-logo-wrap">
+                <img
+                  className="hero-title-logo"
+                  src={brandLogo}
+                  alt={content.hero.brand}
+                  width="400"
+                  height="342"
+                  decoding="async"
+                  fetchPriority="high"
+                />
               </span>
               {content.hero.headline.map((line, index) => (
-                <span className="line-mask hero-support-mask" key={line}>
+                <span className="hero-support-mask" key={line}>
                   <span
                     className={clsx(
-                      'reveal-line hero-support-line',
+                      'hero-support-line',
                       index === content.hero.headline.length - 1 && 'accent-line',
                     )}
                   >
