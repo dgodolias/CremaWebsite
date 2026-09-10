@@ -559,13 +559,18 @@ function App() {
                 {content.hero.eyebrow}
               </p>
             </div>
-            <h1 id="hero-title">
-              <span className="line-mask">
-                <span className="reveal-line script-word">{content.hero.brand}</span>
+            <h1 className="hero-title" id="hero-title">
+              <span className="line-mask hero-brand-mask">
+                <span className="reveal-line script-word hero-brand-line">{content.hero.brand}</span>
               </span>
               {content.hero.headline.map((line, index) => (
-                <span className="line-mask" key={line}>
-                  <span className={clsx('reveal-line', index === content.hero.headline.length - 1 && 'accent-line')}>
+                <span className="line-mask hero-support-mask" key={line}>
+                  <span
+                    className={clsx(
+                      'reveal-line hero-support-line',
+                      index === content.hero.headline.length - 1 && 'accent-line',
+                    )}
+                  >
                     {line}
                   </span>
                 </span>

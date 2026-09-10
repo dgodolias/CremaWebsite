@@ -34,9 +34,11 @@ Success means all five requested offers are visible on desktop and mobile, the s
 
 ## Visual and expression direction
 
+**Hero hierarchy amendment — approved 2026-09-10 (Option A):** `Crema` is the first and dominant visual read in the homepage hero, set as the largest handwritten display line. `Νέες γεύσεις / στο Γκάζι` remains part of the semantic H1 but is rendered at roughly 40% of the brand scale, with quieter weight, spacing and contrast. This amendment preserves the existing copy and palette while reducing the headline's overall visual volume on both desktop and mobile.
+
 Preserve the established Crema charcoal, cream, green and orange palette, handwritten logo energy, high-contrast editorial type and photo-led cards. Use the 1440×810 owner-selected crepe photograph as the only hero media: scrolling toward the third main, black signature section progressively zooms into the crepe and adds a restrained blur; while that section enters, the image zooms back out and becomes sharp again. Lightweight alpha interpolation smooths the transform and stops fully at rest.
 
-Selected expression: `Balanced`; the selected amplifiers are X02 signature imagery, the lightweight scroll-linked hero and one-time entrance/reveal transitions. Third-party smooth scrolling, continuous animation loops, custom-cursor and marquee animation remain excluded to protect runtime performance.
+Selected expression: `Balanced`; the selected amplifiers are X01 expressive typography for the brand-first hero hierarchy, X02 signature imagery, the lightweight scroll-linked hero and one-time entrance/reveal transitions. Third-party smooth scrolling, continuous animation loops, custom-cursor and marquee animation remain excluded to protect runtime performance.
 
 ## Trigger register
 

@@ -4,6 +4,19 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
   await page.goto('./')
 
   await expect(page.locator('h1')).toContainText('Crema')
+  await expect(page.locator('.hero-brand-line')).toHaveText('Crema')
+  await expect(page.locator('.hero-support-line')).toHaveCount(2)
+
+  const heroTypeScale = await page.locator('#hero-title').evaluate((title) => {
+    const brand = title.querySelector<HTMLElement>('.hero-brand-line')
+    const support = title.querySelector<HTMLElement>('.hero-support-line')
+
+    return {
+      brand: brand ? Number.parseFloat(getComputedStyle(brand).fontSize) : 0,
+      support: support ? Number.parseFloat(getComputedStyle(support).fontSize) : 0,
+    }
+  })
+  expect(heroTypeScale.brand / heroTypeScale.support).toBeGreaterThan(2)
   await expect(page.locator('#google_translate_element')).toHaveCount(1)
   await expect(page.locator('.hero-media')).toBeVisible()
   await expect(page.locator('.hero-poster')).toHaveAttribute('src', /crema-scroll-cover\.avif/)
