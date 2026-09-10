@@ -6,7 +6,7 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
   await expect(page.locator('#hero-title')).toHaveAccessibleName(/Crema/i)
   await expect(page.locator('.hero-kickers')).toHaveCount(0)
   await expect(page.locator('.hero-brand-line')).toHaveCount(0)
-  await expect(page.locator('.hero-support-line')).toHaveCount(2)
+  await expect(page.locator('.hero-support-line')).toHaveText(['Νέες γεύσεις', 'στο Γκάζι.'])
   await expect(page.locator('.hero-title-logo')).toBeVisible()
   await expect(page.locator('.hero-title-logo')).toHaveAttribute('src', /crema-logo-optimized\.webp/)
 
@@ -14,16 +14,21 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
     const logo = title.querySelector<HTMLImageElement>('.hero-title-logo')
     const support = title.querySelector<HTMLElement>('.hero-support-line')
     const logoBox = logo?.getBoundingClientRect()
+    const supportBox = support?.getBoundingClientRect()
 
     return {
       logoHeight: logoBox?.height ?? 0,
+      logoNaturalHeight: logo?.naturalHeight ?? 0,
       logoNaturalWidth: logo?.naturalWidth ?? 0,
       logoWidth: logoBox?.width ?? 0,
+      supportHeight: supportBox?.height ?? 0,
       support: support ? Number.parseFloat(getComputedStyle(support).fontSize) : 0,
     }
   })
-  expect(heroHierarchy.logoNaturalWidth).toBeGreaterThan(0)
-  expect(heroHierarchy.logoWidth / heroHierarchy.support).toBeGreaterThan(6)
+  expect(heroHierarchy.logoNaturalWidth).toBe(400)
+  expect(heroHierarchy.logoNaturalHeight).toBe(342)
+  expect(heroHierarchy.logoWidth).toBeGreaterThan(200)
+  expect(heroHierarchy.logoHeight / heroHierarchy.supportHeight).toBeGreaterThan(4)
 
   const supportingDisplayScale = await page.evaluate(() => {
     const readFontSize = (selector: string) => {
@@ -44,7 +49,7 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
     supportingDisplayScale.provio,
     supportingDisplayScale.sectionTitle,
     supportingDisplayScale.storyStatement,
-  )).toBeLessThan(heroHierarchy.logoHeight)
+  )).toBeLessThan(120)
   expect(supportingDisplayScale.marquee).toBeLessThan(heroHierarchy.support)
   await expect(page.locator('#google_translate_element')).toHaveCount(1)
   await expect(page.locator('.hero-media')).toBeVisible()
