@@ -27,10 +27,10 @@ const dimelloCoffee = asset('dimello-coffee.avif')
 const brandLogo = generatedAsset('crema-logo-optimized.webp')
 const provioLogo = asset('provio-logo-reference.png')
 const provioIceCream = asset('provio-amarena-wolt.avif')
-const heroImageBaseScale = 1.025
-const heroImageZoomScale = 1.18
-const heroImageMaxBlur = 4.5
-const heroImageSmoothingTimeConstant = 85
+const heroImageBaseScale = 1.015
+const heroImageZoomScale = 1.1
+const heroImageMaxBlur = 2.25
+const heroImageSmoothingTimeConstant = 120
 const heroImageSettleThreshold = 0.001
 const orderPlatforms = [
   { id: 'efood', label: 'e-food', href: 'https://www.e-food.gr/delivery/menu/crema', logo: asset('efood-logo-official.svg') },
@@ -417,7 +417,7 @@ function HeroScrollImage() {
 
       if (sinceMark) {
         sinceMark.style.opacity = String(1 - easedFade)
-        sinceMark.style.transform = `translate3d(0, ${-18 * easedFade}px, 0)`
+        sinceMark.style.transform = `translate3d(0, ${-10 * easedFade}px, 0)`
       }
 
       const signatureSection = document.querySelector<HTMLElement>('.signature-section')

@@ -17,6 +17,28 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
     }
   })
   expect(heroTypeScale.brand / heroTypeScale.support).toBeGreaterThan(2)
+
+  const supportingDisplayScale = await page.evaluate(() => {
+    const readFontSize = (selector: string) => {
+      const element = document.querySelector(selector)
+      return element ? Number.parseFloat(getComputedStyle(element).fontSize) : 0
+    }
+
+    return {
+      delivery: readFontSize('.delivery-panel span'),
+      marquee: readFontSize('.marquee-group span'),
+      provio: readFontSize('.provio-copy h2'),
+      sectionTitle: readFontSize('.section-copy h2'),
+      storyStatement: readFontSize('.story-visual span'),
+    }
+  })
+  expect(Math.max(
+    supportingDisplayScale.delivery,
+    supportingDisplayScale.provio,
+    supportingDisplayScale.sectionTitle,
+    supportingDisplayScale.storyStatement,
+  )).toBeLessThan(heroTypeScale.brand)
+  expect(supportingDisplayScale.marquee).toBeLessThan(heroTypeScale.support)
   await expect(page.locator('#google_translate_element')).toHaveCount(1)
   await expect(page.locator('.hero-media')).toBeVisible()
   await expect(page.locator('.hero-poster')).toHaveAttribute('src', /crema-scroll-cover\.avif/)
@@ -187,11 +209,11 @@ test('crepe hero zooms and blurs before reversing through the third black sectio
   })
 
   await page.evaluate((top) => window.scrollTo(0, Math.max(top - window.innerHeight, 0)), signatureTop)
-  await expect.poll(() => heroImage.evaluate((element) => new DOMMatrix(getComputedStyle(element).transform).a)).toBeGreaterThan(1.16)
+  await expect.poll(() => heroImage.evaluate((element) => new DOMMatrix(getComputedStyle(element).transform).a)).toBeGreaterThan(1.08)
   await expect.poll(() => heroImage.evaluate((element) => {
     const match = getComputedStyle(element).filter.match(/blur\(([-\d.]+)px\)/)
     return match ? Number.parseFloat(match[1]) : 0
-  })).toBeGreaterThan(4)
+  })).toBeGreaterThan(2)
 
   await page.evaluate((top) => window.scrollTo(0, top), signatureTop)
   await expect.poll(() => heroImage.evaluate((element) => new DOMMatrix(getComputedStyle(element).transform).a)).toBeLessThan(1.04)
