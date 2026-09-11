@@ -1,6 +1,6 @@
 # Sourced Asset Notes
 
-The deployed product-card photography is authentic menu/vendor photography. No newly generated or composited product image is shipped; the hero uses the owner-selected high-resolution Crema photograph.
+The established product-card photography is authentic menu/vendor photography. The owner-approved crepe explorer is the sole food-photography exception and uses the two generated assets documented below; the hero uses the owner-selected high-resolution Crema photograph.
 
 ## Live assets
 
@@ -26,6 +26,11 @@ The deployed product-card photography is authentic menu/vendor photography. No n
 - `crema-lemon-pie-wolt.avif`: lemon pie, `https://imageproxy.wolt.com/menu/menu-images/601d640fa9eedbe434d53a3e/1ebf5bde-69f5-11eb-a8bd-66cead539d41____6_.jpeg`.
 - `crema-donut-bueno-wolt.avif`: Bueno donut, `https://imageproxy.wolt.com/menu/menu-images/601d640fa9eedbe434d53a3e/cebd54aa-69f5-11eb-8ff9-ae5ae456bf5a____18_.jpeg`.
 - `public/assets/generated/crema-logo-optimized.webp` and `crema-logo-favicon.png`: compact web derivatives of the existing clean Crema logo treatment. They are not food photography.
+- `public/assets/generated/crema-hero-logo-coffee-crepes-pastry-shop.png`: ImageGen isolation derived from the owner-provided photographed Crema sign on 2026-09-11. The black sign, green cup mark, white wordmark and yellow handwritten tagline were preserved; `crepes` was inserted after `coffee`, producing the exact line `coffee crepes pastry shop`. This asset is used only by the main hero logo.
+- `public/assets/generated/crema-hero-athens-since-2009.png`: transparent ImageGen typographic asset created on 2026-09-11 from the hero-logo tagline as its style reference. It contains only the exact Greek line `Από το 2009, στην καρδιά της Αθήνας` and is used directly below the main hero logo.
+- `public/assets/generated/crema-hero-dessert-quote.png`: transparent RGBA ImageGen typographic asset created on 2026-09-11 in the same handwritten family as the Greek hero line. Its two outlined white sentence segments are recomposed in the hero to render the approved order `LIFE IS UNCERTAIN. EAT DESSERT FIRST.` immediately below the Greek line.
+- `public/assets/generated/crema-crepe-savory-generated.avif`: owner-approved ImageGen food photograph created on 2026-09-11 for the interactive crepe explorer. Prompt summary: a premium portrait product photograph of one golden-brown triangular savory crepe on a matte white square plate over pale cool-gray stone, with a restrained glimpse of melted gouda, turkey, tomato, green pepper and mushrooms; soft daylight; no text, prices, logos, hands, cutlery or UI. The generated PNG was optimized to AVIF at quality CRF 25.
+- `public/assets/generated/crema-crepe-sweet-generated.avif`: owner-approved ImageGen food photograph created on 2026-09-11 as the matching sweet companion. Prompt summary: a premium portrait product photograph of one golden-brown triangular crepe with chocolate-hazelnut praline, restrained drizzle and fresh strawberry pieces on the same matte white plate and pale cool-gray stone setting; soft daylight; no text, prices, logos, hands, cutlery or UI. The generated PNG was optimized to AVIF at quality CRF 25.
 
 Menu content was checked on 2026-09-04 against:
 
@@ -33,4 +38,4 @@ Menu content was checked on 2026-09-04 against:
 - `https://wolt.com/el/grc/athens/restaurant/crema`
 - `https://box.gr/delivery/gkazi/crema-gkazi`
 
-The original menu downloads, former 120-frame hero sequence and native hero video were removed from the deployed asset tree. The hero now uses the single 1440×810 AVIF cover above with a lightweight scroll-linked transform and blur. Product imagery is unique across the recommendations, expanded-menu cards, Provio feature and gallery; no food photograph is repeated between those sections.
+The original menu downloads, former 120-frame hero sequence and native hero video were removed from the deployed asset tree. The hero now uses the single 1440×810 AVIF cover above with a lightweight scroll-linked transform and blur. Product imagery remains unique across the crepe explorer, recommendations, expanded-menu cards and gallery; no food photograph is repeated between those sections.

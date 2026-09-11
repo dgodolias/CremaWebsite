@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
 import {
   ArrowUpRight,
   AtSign,
@@ -7,12 +6,15 @@ import {
   BookOpenText,
   Check,
   ChevronDown,
+  Clock3,
   Coffee,
   Globe2,
   MapPin,
   Phone,
+  Plus,
   ShoppingBag,
   Star,
+  X,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { greekContent, supportedLanguages } from './content'
@@ -24,8 +26,14 @@ const generatedAsset = (name: string) => `${baseUrl}assets/generated/${name}`
 const heroPoster = asset('crema-scroll-cover.avif')
 const dimelloCoffee = asset('dimello-coffee.avif')
 const brandLogo = generatedAsset('crema-logo-optimized.webp')
-const provioLogo = asset('provio-logo-reference.png')
-const provioIceCream = asset('provio-amarena-wolt.avif')
+const heroBrandLogo = generatedAsset('crema-hero-logo-coffee-crepes-pastry-shop.png')
+const heroHeritageLine = generatedAsset('crema-hero-athens-since-2009.png')
+const heroDessertQuote = generatedAsset('crema-hero-dessert-quote.png')
+const provioStrawberryChocolateCup = generatedAsset('provio-strawberry-chocolate-cup.avif')
+const crepeImages = [
+  generatedAsset('crema-crepe-savory-generated.avif'),
+  generatedAsset('crema-crepe-sweet-generated.avif'),
+]
 const heroImageBaseScale = 1.015
 const heroImageZoomScale = 1.1
 const heroImageMaxBlur = 2.25
@@ -41,7 +49,7 @@ const signatureImages = [
   dimelloCoffee,
   asset('crema-oat-bar-strawberry.avif'),
   asset('crema-arabic-wrap-wolt.avif'),
-  asset('crema-club-xl-wolt.avif'),
+  provioStrawberryChocolateCup,
 ]
 
 const galleryImages = [
@@ -61,7 +69,7 @@ const productImages = [
   asset('crema-mixed-juice-wolt.avif'),
 ]
 
-const navTargets = ['story', 'signatures', 'gazi', 'delivery']
+const navTargets = ['story', 'signatures', 'gazi']
 type TranslationState = 'idle' | 'loading' | 'ready' | 'error'
 type GoogleTranslateOptions = {
   pageLanguage: string
@@ -101,27 +109,6 @@ function isLanguageCode(value: string | null): value is LanguageCode {
 function getInitialLanguage(): LanguageCode {
   const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
   return isLanguageCode(stored) ? stored : 'el'
-}
-
-function MagneticLink({
-  href,
-  children,
-  variant = 'primary',
-}: {
-  href: string
-  children: ReactNode
-  variant?: 'primary' | 'secondary'
-}) {
-  return (
-    <a
-      href={href}
-      className={clsx('magnetic-link', `magnetic-link-${variant}`)}
-      target={href.startsWith('http') ? '_blank' : undefined}
-      rel={href.startsWith('http') ? 'noreferrer' : undefined}
-    >
-      {children}
-    </a>
-  )
 }
 
 function OrderMenu({ label }: { label: string }) {
@@ -366,11 +353,9 @@ function GoogleTranslateBridge({
 
 function HeroScrollImage() {
   const imageRef = useRef<HTMLImageElement>(null)
-  const sinceRef = useRef<HTMLParagraphElement>(null)
 
   useEffect(() => {
     const heroImage = imageRef.current
-    const sinceMark = sinceRef.current
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     let frameId = 0
@@ -410,15 +395,6 @@ function HeroScrollImage() {
     }
 
     const syncScrollTargets = () => {
-      const fadeRange = Math.max(window.innerHeight * 0.72, 1)
-      const fadeProgress = Math.min(1, Math.max(0, window.scrollY / fadeRange))
-      const easedFade = fadeProgress * fadeProgress * (3 - 2 * fadeProgress)
-
-      if (sinceMark) {
-        sinceMark.style.opacity = String(1 - easedFade)
-        sinceMark.style.transform = `translate3d(0, ${-10 * easedFade}px, 0)`
-      }
-
       const signatureSection = document.querySelector<HTMLElement>('.signature-section')
       const reverseStart = Math.max(
         (signatureSection?.offsetTop ?? window.innerHeight * 2) - window.innerHeight,
@@ -444,16 +420,10 @@ function HeroScrollImage() {
   }, [])
 
   return (
-    <>
-      <div className="hero-media" aria-hidden="true">
-        <img ref={imageRef} className="hero-poster" src={heroPoster} alt="" decoding="async" fetchPriority="high" />
-        <div className="hero-media-shade" />
-      </div>
-      <p ref={sinceRef} className="since-scroll-mark" aria-label="Crema, since 2009">
-        <span>Since</span>
-        <strong>2009</strong>
-      </p>
-    </>
+    <div className="hero-media" aria-hidden="true">
+      <img ref={imageRef} className="hero-poster" src={heroPoster} alt="" decoding="async" fetchPriority="high" />
+      <div className="hero-media-shade" />
+    </div>
   )
 }
 
@@ -462,7 +432,7 @@ function useRevealEffects() {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
     const root = document.documentElement
-    const targets = document.querySelectorAll<HTMLElement>('.image-reveal, .section-copy, .delivery-panel')
+    const targets = document.querySelectorAll<HTMLElement>('.image-reveal, .section-copy')
     root.classList.add('reveal-effects')
 
     const observer = new IntersectionObserver(
@@ -486,6 +456,95 @@ function useRevealEffects() {
       root.classList.remove('reveal-effects')
     }
   }, [])
+}
+
+interface CrepeCardProps {
+  card: (typeof greekContent.crepes.cards)[number]
+  closeLabel: string
+  hint: string
+  image: string
+  scrollHint: string
+}
+
+function CrepeCard({ card, closeLabel, hint, image, scrollHint }: CrepeCardProps) {
+  const [isOpen, setIsOpen] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const ingredientsId = `crepe-${card.id}-ingredients`
+
+  return (
+    <article
+      className={clsx('crepe-card', `crepe-card--${card.id}`, isOpen && 'is-open')}
+      data-crepe={card.id}
+      onBlurCapture={(event) => {
+        const nextTarget = event.relatedTarget
+        if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) setIsOpen(false)
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== 'Escape') return
+        setIsOpen(false)
+        triggerRef.current?.focus()
+      }}
+      onPointerEnter={(event) => {
+        if (event.pointerType === 'mouse') setIsOpen(true)
+      }}
+      onPointerLeave={(event) => {
+        if (event.pointerType === 'mouse' && !event.currentTarget.contains(document.activeElement)) setIsOpen(false)
+      }}
+    >
+      <img src={image} alt={card.imageAlt} width="1024" height="1536" loading="lazy" decoding="async" />
+      <div className="crepe-card-shade" aria-hidden="true" />
+
+      <div className="crepe-card-intro">
+        <span className="crepe-card-number">{card.number}</span>
+        <div>
+          <h3>{card.title}</h3>
+          <p>{hint}</p>
+        </div>
+      </div>
+
+      <button
+        ref={triggerRef}
+        className="crepe-card-trigger"
+        type="button"
+        aria-controls={ingredientsId}
+        aria-expanded={isOpen}
+        aria-label={`${isOpen ? closeLabel : hint}: ${card.title}`}
+        onClick={() => setIsOpen((current) => !current)}
+      >
+        {isOpen ? <X size={24} /> : <Plus size={24} />}
+      </button>
+
+      <div
+        className="crepe-ingredients"
+        id={ingredientsId}
+        role="region"
+        aria-hidden={!isOpen}
+        aria-label={`Υλικά για ${card.title}`}
+      >
+        <div className="crepe-ingredients-heading">
+          <span>{card.number} / Υλικά</span>
+          <h3>{card.title}</h3>
+          <p>{scrollHint}</p>
+        </div>
+
+        <div className="crepe-ingredients-scroll" tabIndex={isOpen ? 0 : -1}>
+          {card.categories.map((category) => (
+            <section className="crepe-ingredient-group" key={category.title}>
+              <div>
+                <h4>{category.title}</h4>
+                <span>{category.items.length}</span>
+              </div>
+              <ul>
+                {category.items.map((ingredient) => (
+                  <li key={ingredient}>{ingredient}</li>
+                ))}
+              </ul>
+            </section>
+          ))}
+        </div>
+      </div>
+    </article>
+  )
 }
 
 function App() {
@@ -521,9 +580,9 @@ function App() {
           <img className="brand-logo" src={brandLogo} alt="" width="400" height="342" decoding="async" fetchPriority="high" />
         </a>
         <nav className="desktop-nav" aria-label="Primary navigation">
-          {content.nav.map((item, index) => (
-            <a key={navTargets[index]} href={`#${navTargets[index]}`}>
-              {item}
+          {navTargets.map((target, index) => (
+            <a key={target} href={`#${target}`}>
+              {content.nav[index]}
             </a>
           ))}
           <a className="nav-menu-link" href="https://www.e-food.gr/delivery/menu/crema" target="_blank" rel="noreferrer" aria-label="Crema menu">
@@ -556,30 +615,39 @@ function App() {
               <span className="hero-title-logo-wrap">
                 <img
                   className="hero-title-logo"
-                  src={brandLogo}
+                  src={heroBrandLogo}
                   alt={content.hero.brand}
-                  width="400"
-                  height="342"
+                  width="1473"
+                  height="1068"
                   decoding="async"
                   fetchPriority="high"
                 />
-              </span>
-              {content.hero.headline.map((line, index) => (
-                <span className="hero-support-mask" key={line}>
+                <span className="hero-heritage-line-wrap">
+                  <img
+                    className="hero-heritage-line"
+                    src={heroHeritageLine}
+                    alt="Από το 2009, στην καρδιά της Αθήνας"
+                    width="2170"
+                    height="725"
+                    decoding="async"
+                  />
+                </span>
+                <span className="hero-dessert-quote-wrap">
                   <span
-                    className={clsx(
-                      'hero-support-line',
-                      index === content.hero.headline.length - 1 && 'accent-line',
-                    )}
+                    className="hero-dessert-quote"
+                    role="img"
+                    aria-label="LIFE IS UNCERTAIN. EAT DESSERT FIRST."
                   >
-                    {line}
+                    <span className="hero-dessert-quote-part is-life" aria-hidden="true">
+                      <img src={heroDessertQuote} alt="" width="2172" height="724" decoding="async" />
+                    </span>
+                    <span className="hero-dessert-quote-part is-eat" aria-hidden="true">
+                      <img src={heroDessertQuote} alt="" width="2172" height="724" decoding="async" />
+                    </span>
                   </span>
                 </span>
-              ))}
+              </span>
             </h1>
-            <p className="hero-subcopy">
-              {content.hero.subcopy}
-            </p>
             <div className="hero-actions">
               <OrderMenu label={content.hero.order} />
             </div>
@@ -590,11 +658,6 @@ function App() {
             <span>{content.hero.location}</span>
           </div>
 
-          <div className="hero-footer">
-            <span>{content.hero.footerOne}</span>
-            <span>{content.hero.footerTwo}</span>
-            <span>{content.hero.phone}</span>
-          </div>
         </section>
 
         <section className="marquee-band" aria-label="Crema signature categories">
@@ -608,8 +671,33 @@ function App() {
               <Star size={18} />
               <span>{content.marquee[3]}</span>
               <Star size={18} />
-              <span>{content.marquee[4]}</span>
             </div>
+          </div>
+        </section>
+
+        <section className="crepe-explorer" id="crepes" aria-labelledby="crepes-title">
+          <div className="crepe-explorer-heading">
+            <div>
+              <p className="eyebrow">
+                <Star size={16} />
+                {content.crepes.eyebrow}
+              </p>
+              <h2 id="crepes-title">{content.crepes.title}</h2>
+            </div>
+            <p className="crepe-slogan">{content.crepes.slogan}</p>
+          </div>
+
+          <div className="crepe-grid">
+            {content.crepes.cards.map((card, index) => (
+              <CrepeCard
+                card={card}
+                closeLabel={content.crepes.close}
+                hint={content.crepes.hint}
+                image={crepeImages[index]}
+                key={card.id}
+                scrollHint={content.crepes.scrollHint}
+              />
+            ))}
           </div>
         </section>
 
@@ -681,21 +769,6 @@ function App() {
           </div>
         </section>
 
-        <section className="provio-spotlight" aria-labelledby="provio-title">
-          <div className="provio-mark image-reveal">
-            <img className="provio-product" src={provioIceCream} alt={content.provio.productAlt} width="960" height="540" loading="lazy" decoding="async" />
-            <img className="provio-logo" src={provioLogo} alt={content.provio.logoAlt} width="150" height="151" loading="lazy" decoding="async" />
-          </div>
-          <div className="provio-copy section-copy">
-            <p className="eyebrow">
-              <Star size={16} />
-              {content.provio.eyebrow}
-            </p>
-            <h2 id="provio-title">{content.provio.title}</h2>
-            <p>{content.provio.body}</p>
-          </div>
-        </section>
-
         <section className="gallery-section" aria-label={content.gallery.label}>
           {galleryImages.map((src, index) => (
             <figure className="gallery-tile image-reveal" key={src}>
@@ -723,35 +796,11 @@ function App() {
             </p>
             <h2>{content.location.title}</h2>
             <p>{content.location.body}</p>
+            <div className="location-hours">
+              <Clock3 size={18} aria-hidden="true" />
+              <span>{content.location.hours}</span>
+            </div>
             <div className="location-actions">
-              <MagneticLink href="https://www.google.com/maps/search/?api=1&query=Crema%20Gazi%20Persefonis%2063%20Athens">
-                <MapPin size={18} />
-                {content.location.openMap}
-                <ArrowUpRight size={16} />
-              </MagneticLink>
-              <MagneticLink href="tel:+302103467213" variant="secondary">
-                <Phone size={18} />
-                {content.location.callNow}
-              </MagneticLink>
-            </div>
-          </div>
-        </section>
-
-        <section className="delivery-section" id="delivery">
-          <div className="delivery-copy section-copy">
-            <p className="eyebrow">
-              <Bike size={16} />
-              {content.delivery.eyebrow}
-            </p>
-            <h2>{content.delivery.title}</h2>
-          </div>
-          <div className="delivery-panel image-reveal">
-            <div>
-              <span>{content.delivery.hours}</span>
-              <small>{content.delivery.hoursLabel}</small>
-            </div>
-            <p>{content.delivery.body}</p>
-            <div className="delivery-actions">
               <a href="https://www.instagram.com/crema_gazi/" target="_blank" rel="noreferrer" aria-label={content.meta.instagram}>
                 <AtSign size={18} />
               </a>
@@ -775,6 +824,22 @@ function App() {
       <footer className="site-footer">
         <span className="script-word">Crema</span>
         <p>{content.footer.address}</p>
+        <a
+          className="footer-instagram"
+          href="https://www.instagram.com/crema_gazi/"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Instagram @crema_gazi"
+        >
+          <span className="footer-instagram-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="2.25">
+              <rect x="3" y="3" width="18" height="18" rx="5" />
+              <circle cx="12" cy="12" r="4" />
+              <circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none" />
+            </svg>
+          </span>
+          <span>@crema_gazi</span>
+        </a>
       </footer>
     </div>
   )

@@ -6,29 +6,27 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
   await expect(page.locator('#hero-title')).toHaveAccessibleName(/Crema/i)
   await expect(page.locator('.hero-kickers')).toHaveCount(0)
   await expect(page.locator('.hero-brand-line')).toHaveCount(0)
-  await expect(page.locator('.hero-support-line')).toHaveText(['Νέες γεύσεις', 'στο Γκάζι.'])
+  await expect(page.locator('.hero-support-line')).toHaveCount(0)
   await expect(page.locator('.hero-title-logo')).toBeVisible()
-  await expect(page.locator('.hero-title-logo')).toHaveAttribute('src', /crema-logo-optimized\.webp/)
+  await expect(page.locator('.hero-title-logo')).toHaveAttribute('src', /crema-hero-logo-coffee-crepes-pastry-shop\.png/)
+  await expect(page.locator('.hero-heritage-line')).toHaveAttribute('src', /crema-hero-athens-since-2009\.png/)
+  await expect(page.locator('.hero-dessert-quote')).toHaveAccessibleName('LIFE IS UNCERTAIN. EAT DESSERT FIRST.')
 
   const heroHierarchy = await page.locator('#hero-title').evaluate((title) => {
     const logo = title.querySelector<HTMLImageElement>('.hero-title-logo')
-    const support = title.querySelector<HTMLElement>('.hero-support-line')
     const logoBox = logo?.getBoundingClientRect()
-    const supportBox = support?.getBoundingClientRect()
 
     return {
       logoHeight: logoBox?.height ?? 0,
       logoNaturalHeight: logo?.naturalHeight ?? 0,
       logoNaturalWidth: logo?.naturalWidth ?? 0,
       logoWidth: logoBox?.width ?? 0,
-      supportHeight: supportBox?.height ?? 0,
-      support: support ? Number.parseFloat(getComputedStyle(support).fontSize) : 0,
     }
   })
-  expect(heroHierarchy.logoNaturalWidth).toBe(400)
-  expect(heroHierarchy.logoNaturalHeight).toBe(342)
+  expect(heroHierarchy.logoNaturalWidth).toBe(1473)
+  expect(heroHierarchy.logoNaturalHeight).toBe(1068)
   expect(heroHierarchy.logoWidth).toBeGreaterThan(200)
-  expect(heroHierarchy.logoHeight / heroHierarchy.supportHeight).toBeGreaterThan(4)
+  expect(heroHierarchy.logoHeight).toBeGreaterThan(150)
 
   const supportingDisplayScale = await page.evaluate(() => {
     const readFontSize = (selector: string) => {
@@ -37,36 +35,76 @@ test('homepage renders the Crema experience without layout overflow', async ({ p
     }
 
     return {
+      crepes: readFontSize('.crepe-explorer-heading h2'),
       delivery: readFontSize('.delivery-panel span'),
       marquee: readFontSize('.marquee-group span'),
-      provio: readFontSize('.provio-copy h2'),
       sectionTitle: readFontSize('.section-copy h2'),
       storyStatement: readFontSize('.story-visual span'),
     }
   })
   expect(Math.max(
     supportingDisplayScale.delivery,
-    supportingDisplayScale.provio,
+    supportingDisplayScale.crepes,
     supportingDisplayScale.sectionTitle,
     supportingDisplayScale.storyStatement,
   )).toBeLessThan(120)
-  expect(supportingDisplayScale.marquee).toBeLessThan(heroHierarchy.support)
+  expect(supportingDisplayScale.marquee).toBeLessThan(64)
   await expect(page.locator('#google_translate_element')).toHaveCount(1)
   await expect(page.locator('.hero-media')).toBeVisible()
   await expect(page.locator('.hero-poster')).toHaveAttribute('src', /crema-scroll-cover\.avif/)
   await expect(page.locator('.hero-video')).toHaveCount(0)
   await expect(page.locator('.hero-sequence-canvas')).toHaveCount(0)
-  await expect(page.locator('.since-scroll-mark')).toHaveText(/Since\s*2009/i)
+  await expect(page.locator('.since-scroll-mark')).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Crema menu' })).toHaveAttribute(
     'href',
     'https://www.e-food.gr/delivery/menu/crema',
   )
   await expect(page.locator('.order-trigger')).toBeVisible()
-  await expect(page.locator('.delivery-chip')).toContainText('63')
+  await expect(page.locator('.delivery-chip')).toHaveText('Περσεφόνης 63, Γκάζι')
   await expect(page.locator('.location-iframe')).toHaveAttribute('src', /google\.com\/maps\/embed/)
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
   expect(overflow).toBeLessThanOrEqual(2)
+})
+
+test('location closes the page with all five contact and ordering actions', async ({ page }) => {
+  await page.goto('./')
+
+  const actions = page.locator('.location-actions a')
+  await expect(page).toHaveTitle(/^Crema Gazi 24\/7/)
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    'content',
+    /^Ανοιχτά 24 ώρες, 7 ημέρες την εβδομάδα/,
+  )
+  await expect(page.locator('.delivery-section')).toHaveCount(0)
+  await expect(page.locator('.location-hours')).toContainText('Ανοιχτά 24 ώρες')
+  await expect(page.locator('.location-hours')).toContainText('7 ημέρες την εβδομάδα')
+  await expect(page.getByText('Ανοιχτά 24 ώρες · 7 ημέρες την εβδομάδα', { exact: true })).toHaveCount(1)
+  await expect(actions).toHaveCount(5)
+  await expect(actions.nth(0)).toHaveAttribute('href', 'https://www.instagram.com/crema_gazi/')
+  await expect(actions.nth(1)).toHaveAttribute('href', 'tel:+302103467213')
+  await expect(actions.nth(2)).toHaveAttribute('href', 'https://wolt.com/el/grc/athens/restaurant/crema')
+  await expect(actions.nth(3)).toHaveAttribute('href', 'https://www.e-food.gr/delivery/menu/crema')
+  await expect(actions.nth(4)).toHaveAttribute('href', 'https://box.gr/delivery/gkazi/crema-gkazi')
+
+  const titleSizes = await page.evaluate(() => ({
+    location: Number.parseFloat(getComputedStyle(document.querySelector('.location-copy h2')!).fontSize),
+    standard: Number.parseFloat(getComputedStyle(document.querySelector('.story-section .section-copy h2')!).fontSize),
+  }))
+  expect(titleSizes.location).toBeLessThan(titleSizes.standard)
+
+  const businessSchema = await page.locator('script[type="application/ld+json"]').textContent()
+  expect(businessSchema).not.toBeNull()
+  const structuredData = JSON.parse(businessSchema ?? '{}') as {
+    openingHours?: string
+    openingHoursSpecification?: Array<{ closes?: string; dayOfWeek?: string[]; opens?: string }>
+  }
+  expect(structuredData.openingHours).toBe('Mo-Su 00:00-23:59')
+  expect(structuredData.openingHoursSpecification?.[0]).toMatchObject({
+    closes: '23:59',
+    opens: '00:00',
+  })
+  expect(structuredData.openingHoursSpecification?.[0]?.dayOfWeek).toHaveLength(7)
 })
 
 test('featured menu reflects the requested brands and categories', async ({ page }) => {
@@ -84,14 +122,15 @@ test('featured menu reflects the requested brands and categories', async ({ page
   await expect(expandedMenu).toContainText('Banoffee')
   await expect(expandedMenu).toContainText('Φρουτοσαλάτα')
   await expect(page.locator('.product-card').first().locator('img')).toHaveAttribute('src', /crema-waffle-wolt\.avif/)
-  await expect(page.locator('.provio-spotlight')).toContainText('Μάρκα που στηρίζουμε')
-  await expect(page.locator('.provio-logo')).toHaveAttribute('src', /provio-logo-reference\.png/)
-  await expect(page.locator('.provio-product')).toHaveAttribute('src', /provio-amarena-wolt\.avif/)
+  await expect(page.locator('.provio-spotlight')).toHaveCount(0)
+  const fourthSignature = page.locator('.signature-card').nth(3)
+  await expect(fourthSignature).toContainText('Παγωτό Provio')
+  await expect(fourthSignature.locator('img')).toHaveAttribute('src', /provio-strawberry-chocolate-cup\.avif/)
 
   const displayedProductSources = await page
-    .locator('.signature-card img, .product-card img, .provio-product, .gallery-tile img')
+    .locator('.crepe-card > img, .signature-card img, .product-card img, .gallery-tile img')
     .evaluateAll((images) => images.map((image) => (image as HTMLImageElement).src))
-  expect(displayedProductSources).toHaveLength(16)
+  expect(displayedProductSources).toHaveLength(17)
   expect(new Set(displayedProductSources).size).toBe(displayedProductSources.length)
 
   const clippedProductCards = await page.locator('.product-card').evaluateAll((cards) =>
@@ -105,6 +144,43 @@ test('featured menu reflects the requested brands and categories', async ({ page
   await expect(site).not.toContainText(/Illy|σφολιάτ|croissant|pastry/i)
 })
 
+test('crepe explorer follows the category band and reveals scrollable ingredients without prices', async ({ page }) => {
+  await page.goto('./')
+
+  const explorer = page.locator('.crepe-explorer')
+  await expect(explorer).toContainText('Κρέπες με αγνά υλικά καθημερινά, μείγμα δικό μας και κάθε δημιουργία φτιαγμένη με αγάπη')
+  await expect(explorer).toContainText('Αλμυρή κρέπα')
+  await expect(explorer).toContainText('Γλυκιά κρέπα')
+  await expect(explorer).not.toContainText('€')
+  expect(await explorer.evaluate((element) => element.previousElementSibling?.classList.contains('marquee-band'))).toBe(true)
+
+  const savoryCard = page.locator('.crepe-card--savory')
+  const trigger = savoryCard.locator('.crepe-card-trigger')
+  const canHover = await page.evaluate(() => window.matchMedia('(hover: hover)').matches)
+  if (canHover) {
+    await savoryCard.hover()
+  } else {
+    await trigger.tap()
+  }
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+  await expect(savoryCard.locator('.crepe-ingredients')).toContainText('Προσθέστε τυριά')
+  expect(await savoryCard.locator('.crepe-ingredients-scroll').evaluate(
+    (element) => element.scrollHeight > element.clientHeight,
+  )).toBe(true)
+
+  if (canHover) {
+    await explorer.locator('.crepe-explorer-heading').hover()
+  } else {
+    await trigger.tap()
+  }
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  await trigger.focus()
+  await trigger.press('Enter')
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true')
+  await trigger.press('Escape')
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+})
+
 test('key sections stay reachable on mobile', async ({ page }) => {
   await page.goto('./')
 
@@ -113,6 +189,10 @@ test('key sections stay reachable on mobile', async ({ page }) => {
 
   await expect(page.locator('.site-footer')).toContainText('63')
   await expect(page.locator('.site-footer')).toContainText('delivery')
+  const footerInstagram = page.locator('.footer-instagram')
+  await expect(footerInstagram).toHaveText('@crema_gazi')
+  await expect(footerInstagram).toHaveAttribute('href', 'https://www.instagram.com/crema_gazi/')
+  await expect(footerInstagram.locator('svg')).toBeVisible()
 })
 
 test('language selector opens a custom menu without native browser chrome', async ({ page }) => {
@@ -204,16 +284,12 @@ test('crepe hero zooms and blurs before reversing through the third black sectio
   await page.goto('./')
 
   const heroImage = page.locator('.hero-poster')
-  const sinceMark = page.locator('.since-scroll-mark')
 
-  await expect.poll(() => sinceMark.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeGreaterThan(0.95)
   await expect.poll(() => heroImage.evaluate((element) => new DOMMatrix(getComputedStyle(element).transform).a)).toBeLessThan(1.04)
 
   await page.evaluate(() => window.scrollTo(0, window.innerHeight))
-  await expect.poll(() => sinceMark.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeLessThan(0.05)
 
   await page.evaluate(() => window.scrollTo(0, 0))
-  await expect.poll(() => sinceMark.evaluate((element) => Number.parseFloat(getComputedStyle(element).opacity))).toBeGreaterThan(0.95)
 
   const signatureTop = await page.locator('.signature-section').evaluate((element) => {
     const rect = element.getBoundingClientRect()
